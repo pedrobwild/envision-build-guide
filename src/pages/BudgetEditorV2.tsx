@@ -413,10 +413,13 @@ export default function BudgetEditorV2() {
         !(budget.client_phone && budget.client_phone.trim()) ||
         !Array.isArray(budget.reference_links) ||
         (budget.reference_links as unknown[]).length === 0;
+      const inheritedFields: string[] = [];
+      const inheritedValues: Record<string, unknown> = {};
+      let inheritedFromId: string | null = null;
       if (clientId && stillMissing) {
         const { data: siblings } = await supabase
           .from("budgets")
-          .select("floor_plan_url, hubspot_deal_url, briefing, demand_context, internal_notes, reference_links, client_phone, property_id, created_at")
+          .select("id, floor_plan_url, hubspot_deal_url, briefing, demand_context, internal_notes, reference_links, client_phone, property_id, created_at")
           .eq("client_id", clientId)
           .neq("id", budget.id)
           .is("deleted_at", null)
@@ -424,15 +427,21 @@ export default function BudgetEditorV2() {
           .limit(20);
         const propertyMatch = (siblings ?? []).find((s) => s.property_id && s.property_id === (budget as { property_id?: string | null }).property_id);
         const ordered = propertyMatch ? [propertyMatch, ...(siblings ?? []).filter((s) => s !== propertyMatch)] : (siblings ?? []);
+        const track = (field: string, value: unknown, sibId: string) => {
+          inheritedFields.push(field);
+          inheritedValues[field] = value;
+          if (!inheritedFromId) inheritedFromId = sibId;
+        };
         for (const sib of ordered) {
-          if (!budget.floor_plan_url && !patch.floor_plan_url && sib.floor_plan_url) patch.floor_plan_url = sib.floor_plan_url;
-          if (!budget.hubspot_deal_url && !patch.hubspot_deal_url && sib.hubspot_deal_url) patch.hubspot_deal_url = sib.hubspot_deal_url;
-          if (!(budget.briefing && budget.briefing.trim()) && !patch.briefing && sib.briefing) patch.briefing = sib.briefing;
-          if (!(budget.demand_context && budget.demand_context.trim()) && !patch.demand_context && sib.demand_context) patch.demand_context = sib.demand_context;
-          if (!(budget.internal_notes && budget.internal_notes.trim()) && !patch.internal_notes && sib.internal_notes) patch.internal_notes = sib.internal_notes;
-          if (!(budget.client_phone && budget.client_phone.trim()) && !patch.client_phone && sib.client_phone) patch.client_phone = sib.client_phone;
+          if (!budget.floor_plan_url && !patch.floor_plan_url && sib.floor_plan_url) { patch.floor_plan_url = sib.floor_plan_url; track("floor_plan_url", sib.floor_plan_url, sib.id); }
+          if (!budget.hubspot_deal_url && !patch.hubspot_deal_url && sib.hubspot_deal_url) { patch.hubspot_deal_url = sib.hubspot_deal_url; track("hubspot_deal_url", sib.hubspot_deal_url, sib.id); }
+          if (!(budget.briefing && budget.briefing.trim()) && !patch.briefing && sib.briefing) { patch.briefing = sib.briefing; track("briefing", sib.briefing, sib.id); }
+          if (!(budget.demand_context && budget.demand_context.trim()) && !patch.demand_context && sib.demand_context) { patch.demand_context = sib.demand_context; track("demand_context", sib.demand_context, sib.id); }
+          if (!(budget.internal_notes && budget.internal_notes.trim()) && !patch.internal_notes && sib.internal_notes) { patch.internal_notes = sib.internal_notes; track("internal_notes", sib.internal_notes, sib.id); }
+          if (!(budget.client_phone && budget.client_phone.trim()) && !patch.client_phone && sib.client_phone) { patch.client_phone = sib.client_phone; track("client_phone", sib.client_phone, sib.id); }
           if ((!Array.isArray(budget.reference_links) || (budget.reference_links as unknown[]).length === 0) && !patch.reference_links && Array.isArray(sib.reference_links) && (sib.reference_links as unknown[]).length > 0) {
             patch.reference_links = sib.reference_links;
+            track("reference_links", sib.reference_links, sib.id);
           }
         }
       }
@@ -440,6 +449,16 @@ export default function BudgetEditorV2() {
       setBudget((prev) => (prev ? { ...prev, ...patch } as BudgetRow : prev));
       const { error } = await supabase.from("budgets").update(patch).eq("id", budget.id);
       if (error) logger.warn("[BudgetEditorV2] backfill imóvel/cliente falhou:", error.message);
+      if (!error && inheritedFields.length > 0 && inheritedFromId) {
+        const { error: auditError } = await supabase.from("budget_inheritance_audit").insert([{
+          budget_id: budget.id,
+          source_budget_id: inheritedFromId,
+          inherited_fields: inheritedFields as unknown as never,
+          field_values: inheritedValues as never,
+          source: "editor_backfill",
+        }]);
+        if (auditError) logger.warn("[BudgetEditorV2] auditoria de herança falhou:", auditError.message);
+      }
     })();
   }, [budget?.id, budget?.condominio, budget?.bairro, budget?.city, budget?.metragem, budget?.property_type, budget?.location_type, budget?.floor_plan_url, budget?.hubspot_deal_url]);
 

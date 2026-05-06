@@ -489,6 +489,39 @@ export type Database = {
           },
         ]
       }
+      budget_inheritance_audit: {
+        Row: {
+          budget_id: string
+          created_at: string
+          created_by: string | null
+          field_values: Json
+          id: string
+          inherited_fields: Json
+          source: string
+          source_budget_id: string | null
+        }
+        Insert: {
+          budget_id: string
+          created_at?: string
+          created_by?: string | null
+          field_values?: Json
+          id?: string
+          inherited_fields?: Json
+          source?: string
+          source_budget_id?: string | null
+        }
+        Update: {
+          budget_id?: string
+          created_at?: string
+          created_by?: string | null
+          field_values?: Json
+          id?: string
+          inherited_fields?: Json
+          source?: string
+          source_budget_id?: string | null
+        }
+        Relationships: []
+      }
       budget_lost_reasons: {
         Row: {
           budget_id: string
