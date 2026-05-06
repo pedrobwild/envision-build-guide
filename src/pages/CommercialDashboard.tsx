@@ -438,32 +438,29 @@ export default function CommercialDashboard() {
   async function loadData() {
     setLoading(true);
     const canManageAll = isAdmin || isOrcamentista;
+    const canViewCommercialPipeline = canManageAll || profile?.roles.includes("comercial");
     let budgetQuery = supabase
       .from("budgets")
       .select("id, client_id, property_id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, updated_at, generated_at, last_viewed_at, view_count, commercial_owner_id, estimator_owner_id, public_id, status, version_number, version_group_id, is_current_version, is_published_version, sequential_code, budget_pdf_url, manual_total, pipeline_id, client_phone, floor_plan_url")
       .order("created_at", { ascending: false });
 
+    // Sempre mostra apenas a versão atual de cada grupo.
+    budgetQuery = budgetQuery.or("is_current_version.eq.true,is_current_version.is.null");
+
+    if (!canViewCommercialPipeline) {
+      setBudgets([]);
+      setProfiles([]);
+      setSyncedBudgetIds(new Set());
+      setLoading(false);
+      return;
+    }
+
     if (!canManageAll) {
-      // Visibilidade do comercial: orçamentos atribuídos a ele OU orçamentos
-      // sem owner comercial em qualquer etapa relevante do funil
-      // (do MQL ao fechamento). Combinamos o filtro de versão atual com o de
-      // visibilidade num único .or() — encadear .or() duas vezes faz o
-      // PostgREST sobrescrever o primeiro filtro, derrubando a query.
-      const commercialRelevantStatuses = [
-        "mql", "qualificacao", "lead", "validacao_briefing",
-        "novo", "requested",
-        "triage", "assigned", "in_progress", "waiting_info",
-        "ready_for_review", "delivered_to_sales", "sent_to_client",
-        "revision_requested", "minuta_solicitada", "contrato_fechado", "lost"
-      ];
-      budgetQuery = budgetQuery
-        .or("is_current_version.eq.true,is_current_version.is.null")
-        .or(
-          `commercial_owner_id.eq.${user!.id},and(commercial_owner_id.is.null,internal_status.in.(${commercialRelevantStatuses.join(",")}))`,
-        );
-    } else {
-      // Admin vê todos, mas só a versão atual de cada grupo.
-      budgetQuery = budgetQuery.or("is_current_version.eq.true,is_current_version.is.null");
+      // Comercial vê apenas o que já está atribuído a ele. O restante da
+      // operação segue disponível para admin/orçamentista, evitando resultados
+      // divergentes entre usuários causados por ORs encadeados e por cards sem
+      // responsável comercial aparecerem seletivamente.
+      budgetQuery = budgetQuery.eq("commercial_owner_id", user!.id);
     }
     const [budgetsRes, profilesRes, syncRes] = await Promise.all([
       budgetQuery,
