@@ -453,8 +453,8 @@ export default function BudgetEditorV2() {
         const { error: auditError } = await supabase.from("budget_inheritance_audit").insert([{
           budget_id: budget.id,
           source_budget_id: inheritedFromId,
-          inherited_fields: inheritedFields,
-          field_values: inheritedValues,
+          inherited_fields: inheritedFields as unknown as never,
+          field_values: inheritedValues as never,
           source: "editor_backfill",
         }]);
         if (auditError) logger.warn("[BudgetEditorV2] auditoria de herança falhou:", auditError.message);
