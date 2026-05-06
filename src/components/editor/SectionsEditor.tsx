@@ -829,15 +829,62 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
   const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const pendingUpdates = useRef<Record<string, Record<string, unknown>>>({});
 
-  // Clear all pending debounce timers on unmount to avoid orphan saves & memory leaks
+  // Flush imediato de qualquer save pendente (debounce em voo). Usado em
+  // unmount, pagehide, beforeunload — garante que edições não se percam quando
+  // o usuário troca de aba/dá refresh durante a janela de 600ms do debounce.
+  const flushPendingNow = useCallback(() => {
+    const pending = pendingUpdates.current;
+    pendingUpdates.current = {};
+    Object.values(timers.current).forEach(t => clearTimeout(t));
+    timers.current = {};
+    Object.entries(pending).forEach(([key, updates]) => {
+      if (!updates || Object.keys(updates).length === 0) return;
+      const [logicalTable, id] = key.split("-");
+      if (!logicalTable || !id) return;
+      const actualTable = logicalTable === "sections" ? cfg.sectionTable : cfg.itemTable;
+      // Persiste localmente antes de tentar a rede — se a página fechar antes
+      // do UPDATE responder, a fila garante reenvio no próximo mount/online.
+      enqueueRowUpdate(budgetId, actualTable, id, updates);
+      void supabase
+        .from(actualTable as never)
+        .update(updates as never)
+        .eq("id", id)
+        .then(({ error }) => {
+          if (!error) {
+            // Sucesso → remove da fila offline.
+            void flushSectionsQueue(budgetId);
+          }
+        });
+    });
+  }, [budgetId, cfg]);
+
+  // Persiste pendências ao sair da página, e tenta drenar fila offline ao
+  // montar / reconectar.
   useEffect(() => {
+    const onExit = () => flushPendingNow();
+    window.addEventListener("pagehide", onExit);
+    window.addEventListener("beforeunload", onExit);
     return () => {
-      Object.values(timers.current).forEach(t => clearTimeout(t));
-      timers.current = {};
-      pendingUpdates.current = {};
+      window.removeEventListener("pagehide", onExit);
+      window.removeEventListener("beforeunload", onExit);
+      flushPendingNow();
       if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
     };
-  }, []);
+  }, [flushPendingNow]);
+
+  // Drena fila offline (de sessões anteriores que falharam) ao montar e ao
+  // recuperar conexão. Mantém o estado consistente com o que está no banco.
+  useEffect(() => {
+    if (!budgetId) return;
+    const tryFlush = async () => {
+      if (!hasSectionsPending(budgetId)) return;
+      const ok = await flushSectionsQueue(budgetId);
+      if (ok) onSaveStatusChange?.("saved");
+    };
+    void tryFlush();
+    window.addEventListener("online", tryFlush);
+    return () => window.removeEventListener("online", tryFlush);
+  }, [budgetId, onSaveStatusChange]);
   const [suppliers, setSuppliers] = useState<{ id: string; name: string; categoria: string | null }[]>([]);
 
   // Load suppliers once
