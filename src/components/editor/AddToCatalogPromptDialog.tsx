@@ -500,6 +500,16 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
   };
 
 
+  /** Reuse an existing catalog item instead of creating a duplicate.
+   *  Hands its id off to the editor exactly like a freshly-created one,
+   *  but with a no-op undo (we didn't create anything new). */
+  const handleUseExisting = (existing: DuplicateSuggestion) => {
+    const sectionsToLink = Array.from(new Set(selectedSections.filter(Boolean)));
+    onCreated?.(existing.id, existing.item_type, sectionsToLink, async () => {});
+    toast.success(`Vinculado a "${existing.name}" — sem cadastro duplicado.`);
+    onOpenChange(false);
+  };
+
   const handleSkip = () => {
     onOpenChange(false);
   };
