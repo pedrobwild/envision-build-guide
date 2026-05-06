@@ -649,7 +649,16 @@ export default function BudgetEditorV2() {
 
   // C3: Cancel auto-save timer on unmount
   useEffect(() => {
+    const persistPendingOnPageExit = () => {
+      persistPendingBudgetUpdatesLocally();
+    };
+
+    window.addEventListener("pagehide", persistPendingOnPageExit);
+    window.addEventListener("beforeunload", persistPendingOnPageExit);
+
     return () => {
+      window.removeEventListener("pagehide", persistPendingOnPageExit);
+      window.removeEventListener("beforeunload", persistPendingOnPageExit);
       if (autoSaveTimer.current) {
         clearTimeout(autoSaveTimer.current);
         autoSaveTimer.current = null;
