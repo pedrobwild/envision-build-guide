@@ -401,21 +401,11 @@ export function StickyEditorHeader({
           </div>
 
           {onPublish && (
-            <Button
-              size="sm"
-              className="h-9 sm:h-8 px-3 text-xs gap-1.5 shrink-0"
-              onClick={onPublish}
-              disabled={publishing}
-              aria-label={publishing ? "Publicando" : "Salvar e Publicar"}
-            >
-              {publishing ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Save className="h-3.5 w-3.5" />
-              )}
-              <span className="hidden sm:inline">{publishing ? "Publicando…" : "Salvar e Publicar"}</span>
-              <span className="sm:hidden">{publishing ? "…" : "Publicar"}</span>
-            </Button>
+            <PublishButton
+              onConfirm={onPublish}
+              publishing={!!publishing}
+              isAlreadyPublished={budget.is_published_version === true}
+            />
           )}
 
           {primaryAction && (
