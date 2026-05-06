@@ -720,13 +720,8 @@ export default function BudgetEditorV2() {
       if (autoSaveTimer.current) {
         clearTimeout(autoSaveTimer.current);
         autoSaveTimer.current = null;
-        if (lastSavePayload.current && !PROTECTED_FIELDS.current.has(lastSavePayload.current.field)) {
-          await supabase
-            .from("budgets")
-            .update({ [lastSavePayload.current.field]: lastSavePayload.current.value } as Record<string, unknown>)
-            .eq("id", budgetId);
-        }
       }
+      await flushPendingBudgetUpdates();
 
       const groupId = await ensureVersionGroup(budgetId);
       // Fallback de public_id caso seja a primeira publicação do grupo.
