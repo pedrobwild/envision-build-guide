@@ -401,6 +401,41 @@ export default function BudgetEditorV2() {
         const hub = (cli as { hubspot_contact_url?: string | null } | null)?.hubspot_contact_url;
         if (hub) patch.hubspot_deal_url = hub;
       }
+      // Fallback adicional: tenta herdar de orçamentos irmãos do mesmo cliente
+      // quando os campos críticos do card ainda estão vazios (planta, links,
+      // briefing, hubspot, telefone, contexto e notas internas).
+      const stillMissing =
+        (!budget.floor_plan_url && !patch.floor_plan_url) ||
+        (!budget.hubspot_deal_url && !patch.hubspot_deal_url) ||
+        !(budget.briefing && budget.briefing.trim()) ||
+        !(budget.demand_context && budget.demand_context.trim()) ||
+        !(budget.internal_notes && budget.internal_notes.trim()) ||
+        !(budget.client_phone && budget.client_phone.trim()) ||
+        !Array.isArray(budget.reference_links) ||
+        (budget.reference_links as unknown[]).length === 0;
+      if (clientId && stillMissing) {
+        const { data: siblings } = await supabase
+          .from("budgets")
+          .select("floor_plan_url, hubspot_deal_url, briefing, demand_context, internal_notes, reference_links, client_phone, property_id, created_at")
+          .eq("client_id", clientId)
+          .neq("id", budget.id)
+          .is("deleted_at", null)
+          .order("created_at", { ascending: false })
+          .limit(20);
+        const propertyMatch = (siblings ?? []).find((s) => s.property_id && s.property_id === (budget as { property_id?: string | null }).property_id);
+        const ordered = propertyMatch ? [propertyMatch, ...(siblings ?? []).filter((s) => s !== propertyMatch)] : (siblings ?? []);
+        for (const sib of ordered) {
+          if (!budget.floor_plan_url && !patch.floor_plan_url && sib.floor_plan_url) patch.floor_plan_url = sib.floor_plan_url;
+          if (!budget.hubspot_deal_url && !patch.hubspot_deal_url && sib.hubspot_deal_url) patch.hubspot_deal_url = sib.hubspot_deal_url;
+          if (!(budget.briefing && budget.briefing.trim()) && !patch.briefing && sib.briefing) patch.briefing = sib.briefing;
+          if (!(budget.demand_context && budget.demand_context.trim()) && !patch.demand_context && sib.demand_context) patch.demand_context = sib.demand_context;
+          if (!(budget.internal_notes && budget.internal_notes.trim()) && !patch.internal_notes && sib.internal_notes) patch.internal_notes = sib.internal_notes;
+          if (!(budget.client_phone && budget.client_phone.trim()) && !patch.client_phone && sib.client_phone) patch.client_phone = sib.client_phone;
+          if ((!Array.isArray(budget.reference_links) || (budget.reference_links as unknown[]).length === 0) && !patch.reference_links && Array.isArray(sib.reference_links) && (sib.reference_links as unknown[]).length > 0) {
+            patch.reference_links = sib.reference_links;
+          }
+        }
+      }
       if (Object.keys(patch).length === 0) return;
       setBudget((prev) => (prev ? { ...prev, ...patch } as BudgetRow : prev));
       const { error } = await supabase.from("budgets").update(patch).eq("id", budget.id);
