@@ -34,7 +34,19 @@ interface DuplicateSuggestion {
   similarity: number;
 }
 
-/** Normalize string for similarity comparison: lowercase, strip accents, collapse whitespace. */
+/** Singularize trivial Portuguese plurals so 'torneiras' matches 'torneira'.
+ *  Heuristic only — fine for catalog item-name comparison. */
+function singularizePt(token: string): string {
+  if (token.length <= 3) return token;
+  if (token.endsWith("oes") || token.endsWith("aes") || token.endsWith("aos")) return token.slice(0, -3) + "ao";
+  if (token.endsWith("ais") || token.endsWith("eis") || token.endsWith("ois") || token.endsWith("uis")) return token.slice(0, -2) + "l";
+  if (token.endsWith("ns")) return token.slice(0, -2) + "m";
+  if (token.endsWith("res") || token.endsWith("ses") || token.endsWith("zes")) return token.slice(0, -2);
+  if (token.endsWith("s")) return token.slice(0, -1);
+  return token;
+}
+
+/** Normalize string for similarity comparison: lowercase, strip accents, singularize, collapse whitespace. */
 function normalizeForCompare(s: string): string {
   return s
     .toLowerCase()
@@ -42,7 +54,10 @@ function normalizeForCompare(s: string): string {
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^\w\s]/g, " ")
     .replace(/\s+/g, " ")
-    .trim();
+    .trim()
+    .split(" ")
+    .map(singularizePt)
+    .join(" ");
 }
 
 /** Token-based Jaccard similarity (0..1). Cheap and good enough for short item names. */
