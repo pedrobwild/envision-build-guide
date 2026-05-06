@@ -989,6 +989,9 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
       });
 
       if (saveError) {
+        // Persiste localmente para reenvio em online/mount — protege contra
+        // perda de edição em quedas de rede ou timeouts intermitentes.
+        if (mergedUpdates) enqueueRowUpdate(budgetId, actualTable, id, mergedUpdates);
         onSaveStatusChange?.("error");
       } else {
         // Só sinaliza "saved" quando não há nenhum outro item ainda em debounce/saving
