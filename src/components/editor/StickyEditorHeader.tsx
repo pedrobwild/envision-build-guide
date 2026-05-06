@@ -1,6 +1,16 @@
 import { useMemo, useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, Check, X, RotateCcw, Save, FileText, Link2, Copy, ExternalLink, Download, FileSpreadsheet, FileDown, ChevronDown, MoreHorizontal } from "lucide-react";
+import { ArrowLeft, Loader2, Check, X, RotateCcw, Save, FileText, Link2, Copy, ExternalLink, Download, FileSpreadsheet, FileDown, ChevronDown, MoreHorizontal, Send, AlertTriangle } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
