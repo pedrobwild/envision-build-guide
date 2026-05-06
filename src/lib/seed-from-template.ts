@@ -61,7 +61,7 @@ export async function seedFromTemplate(
     report("Limpando seções existentes…", 10);
     const { error: clearErr } = await supabase.rpc("seed_budget_from_template", {
       p_budget_id: budgetId,
-      p_template_id: null,
+      p_template_id: null as unknown as string,
     });
     if (clearErr) throw new Error(`Falha ao limpar seções: ${clearErr.message}`);
 
