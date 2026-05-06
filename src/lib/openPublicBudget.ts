@@ -110,8 +110,11 @@ function openWithMode(trace: OpenBudgetTrace, mode: OpenMode = getOpenMode()) {
 
   // new_tab / auto: abre stub agora (dentro do gesto)
   const win = typeof window !== "undefined"
-    ? window.open("about:blank", "_blank", "noopener,noreferrer")
+    ? window.open("about:blank", "_blank")
     : null;
+  // Proteção manual contra reverse tabnabbing (equivalente a noopener),
+  // sem o efeito colateral de window.open retornar null em alguns browsers.
+  if (win) { try { (win as Window).opener = null; } catch { /* cross-origin */ } }
   trace.setPopupBlocked(!win);
 
   return {
@@ -123,9 +126,12 @@ function openWithMode(trace: OpenBudgetTrace, mode: OpenMode = getOpenMode()) {
       // Stub indisponível: tenta nova aba uma vez
       trace.step("stub_unavailable_retry_open", { url });
       const retry = typeof window !== "undefined"
-        ? window.open(url, "_blank", "noopener,noreferrer")
+        ? window.open(url, "_blank")
         : null;
-      if (retry) return;
+      if (retry) {
+        try { (retry as Window).opener = null; } catch { /* cross-origin */ }
+        return;
+      }
       // Bloqueado: fallback para mesma aba + avisa o usuário
       trace.step("popup_blocked_fallback_same_tab", { url });
       notifyPopupBlocked();
