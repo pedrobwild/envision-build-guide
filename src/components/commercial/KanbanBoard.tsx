@@ -730,7 +730,7 @@ function KanbanCard({
 
   return (
     <Card
-      className={`p-3 text-left transition-all border border-l-[3px] ${borderColor} ${
+      className={`relative p-3 text-left transition-all border border-l-[3px] ${borderColor} ${
         isDragging ? "opacity-60 shadow-xl rotate-2 scale-105" : "hover:shadow-md"
       } ${locked ? "cursor-default" : "cursor-grab active:cursor-grabbing"} ${
         highPrio ? "ring-1 ring-warning/30" : ""
@@ -740,7 +740,14 @@ function KanbanCard({
         onClick();
       }}
     >
-      <div className="flex items-start gap-1.5 mb-1.5">
+      <div
+        className="absolute top-1 right-1 z-10"
+        onClick={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
+      >
+        <CardActionsSlot budget={b} />
+      </div>
+      <div className="flex items-start gap-1.5 mb-1.5 pr-8">
         {highPrio && (
           <Pin className="h-3 w-3 shrink-0 text-warning mt-0.5 fill-warning" />
         )}
