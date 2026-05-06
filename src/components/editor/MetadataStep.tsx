@@ -139,6 +139,10 @@ export function MetadataStep({ budget, onFieldChange }: MetadataStepProps) {
 
       {/* ═══ IMÓVEL & LOCALIZAÇÃO ═══ */}
       <SectionHeader icon={Building} title="Imóvel & Localização" />
+      <LinkedPropertyCard
+        clientId={(budget as { client_id?: string | null }).client_id}
+        propertyId={(budget as { property_id?: string | null }).property_id}
+      />
       <div className="space-y-0">
         <PropertyRow icon={Building} label="Condomínio">
           <NotionInput
