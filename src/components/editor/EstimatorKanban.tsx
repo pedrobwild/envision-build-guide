@@ -195,6 +195,7 @@ interface BudgetRow {
   version_group_id: string | null;
   is_current_version: boolean | null;
   public_id: string | null;
+  floor_plan_url?: string | null;
 }
 
 interface EstimatorKanbanProps {
@@ -328,6 +329,7 @@ function SubSectionGroup({
                 commercialName={b.commercial_owner_id ? getProfileName(b.commercial_owner_id) : undefined}
                 estimatorName={b.estimator_owner_id ? getProfileName(b.estimator_owner_id) : undefined}
                 publicId={b.public_id}
+                floorPlanUrl={b.floor_plan_url}
                 createdAt={b.created_at}
                 updatedAt={b.updated_at}
                 mode="estimator"
@@ -811,6 +813,7 @@ export function EstimatorKanban({ budgets, onStatusChange, onCardClick, getProfi
                             commercialName={b.commercial_owner_id ? getProfileName(b.commercial_owner_id) : undefined}
                             estimatorName={b.estimator_owner_id ? getProfileName(b.estimator_owner_id) : undefined}
                             publicId={b.public_id}
+                            floorPlanUrl={b.floor_plan_url}
                             createdAt={b.created_at}
                             updatedAt={b.updated_at}
                             mode="estimator"
