@@ -654,8 +654,9 @@ export default function BudgetEditorV2() {
         clearTimeout(autoSaveTimer.current);
         autoSaveTimer.current = null;
       }
+      persistPendingBudgetUpdatesLocally();
     };
-  }, []);
+  }, [persistPendingBudgetUpdatesLocally]);
 
   // Sincroniza fila offline ao montar e ao reconectar — garante que edições
   // feitas durante quedas de rede (ex.: trocar responsável enquanto sections
@@ -1186,6 +1187,7 @@ export default function BudgetEditorV2() {
                         onBudgetFieldChange={(field, value) => {
                           setBudget({ ...budget, [field]: value });
                         }}
+                         autoSaveField={autoSaveBudgetField}
                       />
                     </div>
                     <Sheet open={briefingOpen} onOpenChange={setBriefingOpen}>
@@ -1204,6 +1206,7 @@ export default function BudgetEditorV2() {
                             onBudgetFieldChange={(field, value) => {
                               setBudget({ ...budget, [field]: value });
                             }}
+                            autoSaveField={autoSaveBudgetField}
                           />
                         </div>
                       </SheetContent>
