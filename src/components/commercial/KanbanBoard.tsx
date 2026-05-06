@@ -37,10 +37,10 @@ function CardActionsSlot({ budget }: { budget: BudgetRow }) {
         <Button
           variant="ghost"
           size="icon"
-          className="h-6 w-6 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/80 opacity-60 hover:opacity-100 transition-opacity"
+          className="h-8 w-8 rounded-md bg-background/80 backdrop-blur border border-border text-foreground hover:bg-muted shadow-sm"
           aria-label="Ações do orçamento"
         >
-          <MoreVertical className="h-3.5 w-3.5" />
+          <MoreVertical className="h-4 w-4" />
         </Button>
       }
     />
