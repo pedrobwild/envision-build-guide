@@ -1398,7 +1398,7 @@ export default function CommercialDashboard() {
                 </SelectContent>
               </Select>
 
-              {isAdmin && commercialOptions.length > 0 && (
+              {canManageAll && commercialOptions.length > 0 && (
                 <Select value={commercialFilter} onValueChange={setCommercialFilter}>
                   <SelectTrigger className={`w-[150px] h-8 text-xs ${commercialFilter !== "all" ? "border-primary/40 bg-primary/5" : ""}`}>
                     <User className="h-3 w-3 mr-1 shrink-0" />
@@ -1580,7 +1580,7 @@ export default function CommercialDashboard() {
             ? ({
                 // Pré-atribui o comercial atual (não-admins) para que o card
                 // criado já apareça com dono no pipeline e nas listagens.
-                commercial_owner_id: !isAdmin && user?.id ? user.id : null,
+                commercial_owner_id: !canManageAll && user?.id ? user.id : null,
                 status: "lead",
               } as Partial<import("@/hooks/useClients").Client>)
             : null
