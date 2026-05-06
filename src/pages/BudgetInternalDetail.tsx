@@ -1517,6 +1517,13 @@ export default function BudgetInternalDetail() {
                     />
                   )}
 
+                  {activeModule === "media" && (
+                    <MediaUploadSection
+                      publicId={budget.public_id || budget.id}
+                      budgetId={budget.id}
+                    />
+                  )}
+
                   {activeModule === "activities" && (
                     <div className="space-y-6">
                       <BudgetEventsTimeline events={events} getProfileName={getProfileName} />
