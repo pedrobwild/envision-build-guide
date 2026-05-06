@@ -40,7 +40,7 @@ export async function safeDeleteBudget(
 ): Promise<SafeDeleteResult> {
   const { data: target, error: loadErr } = await supabase
     .from("budgets")
-    .select("id, status, is_current_version, is_published_version, deleted_at")
+    .select("id, status, is_current_version, is_published_version, deleted_at, version_group_id")
     .eq("id", budgetId)
     .maybeSingle();
 
@@ -48,19 +48,46 @@ export async function safeDeleteBudget(
   if (!target) return { ok: false, reason: "Orçamento não encontrado" };
   if (target.deleted_at) return { ok: false, reason: "Orçamento já está na lixeira" };
 
-  if (!options.force) {
-    if (target.is_current_version) {
-      return {
-        ok: false,
-        reason: "Não é possível mover a versão atual para a lixeira. Promova outra como atual antes.",
-      };
+  // Quando o orçamento é a versão atual e/ou publicada do grupo, tenta
+  // auto-promover a versão anterior (irmã não-deletada) para evitar deixar
+  // o grupo sem current/published. Se for a única versão do grupo, segue
+  // direto — soft-delete sem promoção.
+  if (!options.force && (target.is_current_version || target.is_published_version)) {
+    const groupId = target.version_group_id ?? target.id;
+
+    const { data: siblings, error: sibErr } = await supabase
+      .from("budgets")
+      .select("id, version_number, is_current_version, is_published_version")
+      .eq("version_group_id", groupId)
+      .neq("id", budgetId)
+      .is("deleted_at", null)
+      .order("version_number", { ascending: false });
+
+    if (sibErr) return { ok: false, reason: `Falha ao verificar versões irmãs: ${sibErr.message}` };
+
+    const successor = (siblings ?? [])[0] ?? null;
+
+    if (successor) {
+      // Promove a versão mais recente irmã antes de soft-deletar a atual.
+      const patch: Record<string, boolean> = {};
+      if (target.is_current_version) patch.is_current_version = true;
+      if (target.is_published_version) patch.is_published_version = true;
+
+      // Demove a atual primeiro para não violar o índice único de "1 current
+      // por grupo" durante a transição.
+      const { error: demoteErr } = await supabase
+        .from("budgets")
+        .update({ is_current_version: false, is_published_version: false })
+        .eq("id", budgetId);
+      if (demoteErr) return { ok: false, reason: `Falha ao despromover versão atual: ${demoteErr.message}` };
+
+      const { error: promoteErr } = await supabase
+        .from("budgets")
+        .update(patch)
+        .eq("id", successor.id);
+      if (promoteErr) return { ok: false, reason: `Falha ao promover versão anterior: ${promoteErr.message}` };
     }
-    if (target.is_published_version) {
-      return {
-        ok: false,
-        reason: "Não é possível mover a versão publicada para a lixeira. Despublique ou publique outra versão antes.",
-      };
-    }
+    // Se não há irmã, prossegue: o grupo inteiro vai para a lixeira.
   }
 
   const { data: userData } = await supabase.auth.getUser();
