@@ -1247,9 +1247,10 @@ export default function BudgetInternalDetail() {
                 {
                   key: "media",
                   icon: ImageIcon,
-                  label: "Mídias & Projetos",
-                  description: "Vídeos 3D, fotos e PDFs.",
-                  onClick: () => navigate(`/admin/budget/${budget.id}`),
+                  label: "Mídias & Anexos",
+                  description: "Fotos da planta, estado do imóvel, renders 3D, vídeos e referências.",
+                  active: activeModule === "media",
+                  onClick: () => setActiveModule("media"),
                 },
                 {
                   key: "client",
