@@ -243,8 +243,9 @@ interface BudgetRow {
   is_published_version: boolean | null;
   client_phone?: string | null;
   client_id?: string | null;
-  /** Versões "irmãs" (mesmo cliente+imóvel, version_group_id distinto) representadas por este card. */
+  /** Versões irmãs do mesmo orçamento formal (mesmo version_group_id) representadas por este card. */
   sibling_budget_ids?: string[];
+  floor_plan_url?: string | null;
 }
 
 export type DueFilter = "all" | "overdue" | "due_soon";
@@ -458,6 +459,7 @@ function SubSectionGroup({
                   nextAction={next}
                   leadScore={b.client_id ? leadScoreMap?.get(b.client_id) ?? null : null}
                   siblingCount={b.sibling_budget_ids?.length ?? 0}
+                  floorPlanUrl={b.floor_plan_url}
                   onClick={() => onCardClick(b.id)}
                   onOpenHistory={onOpenHistory ? () => onOpenHistory(b) : undefined}
                   onQuickAction={(action) => {
