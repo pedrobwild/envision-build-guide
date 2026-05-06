@@ -53,20 +53,36 @@ export default function Login() {
       setCheckingSession(false);
     }, 8000);
 
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (!isMounted) return;
-      if (error) {
-        supabase.auth.signOut().catch(() => {});
-        finishSessionCheck();
-        return;
-      }
-      if (session?.user) {
+    (async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (!isMounted) return;
+        if (error || !session?.user) {
+          if (error) await supabase.auth.signOut().catch(() => {});
+          finishSessionCheck();
+          return;
+        }
+        // Valida o JWT com o servidor — se estiver corrompido (bad_jwt /
+        // missing sub claim), limpa a sessão local e mantém o usuário no
+        // login em vez de navegar para "/" e travar a UI.
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        if (!isMounted) return;
+        if (userError || !userData?.user) {
+          await supabase.auth.signOut().catch(() => {});
+          try {
+            Object.keys(localStorage)
+              .filter((k) => k.startsWith("sb-") && k.includes("-auth-token"))
+              .forEach((k) => localStorage.removeItem(k));
+          } catch { /* ignore */ }
+          finishSessionCheck();
+          return;
+        }
         navigate("/", { replace: true });
+        finishSessionCheck();
+      } catch {
+        finishSessionCheck();
       }
-      finishSessionCheck();
-    }).catch(() => {
-      finishSessionCheck();
-    });
+    })();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
