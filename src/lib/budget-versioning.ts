@@ -1,5 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { logVersionEvent } from "@/lib/version-audit";
+import { syncMediaConfigFromStorage } from "@/lib/budget-media-sync";
+import { logger } from "@/lib/logger";
 
 /**
  * Ensure a budget has a version_group_id. If it doesn't, set it to its own id.
