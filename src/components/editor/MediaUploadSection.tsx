@@ -645,6 +645,70 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
 
   useEffect(() => { loadTours(); }, [loadTours]);
 
+  // Load floor plan URL
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("budgets")
+        .select("floor_plan_url")
+        .eq("id", budgetId)
+        .maybeSingle();
+      if (!cancelled) setFloorPlanUrl(data?.floor_plan_url ?? null);
+    })();
+    return () => { cancelled = true; };
+  }, [budgetId]);
+
+  const handleFloorPlanUpload = async (file: File | null | undefined) => {
+    if (!file) return;
+    const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+    const isPng = file.type === "image/png" || /\.png$/i.test(file.name);
+    if (!isPdf && !isPng) {
+      toast.error("Apenas arquivos PDF ou PNG são aceitos.");
+      return;
+    }
+    setFloorPlanUploading(true);
+    try {
+      const ext = isPdf ? "pdf" : "png";
+      const path = `floor-plans/${budgetId}-${Date.now()}.${ext}`;
+      await uploadWithRetry({
+        bucket: "budget-assets",
+        path,
+        file,
+        upsert: true,
+        contentType: isPdf ? "application/pdf" : "image/png",
+      });
+      const { data: { publicUrl } } = supabase.storage.from("budget-assets").getPublicUrl(path);
+      const { error: updErr } = await supabase
+        .from("budgets")
+        .update({ floor_plan_url: publicUrl })
+        .eq("id", budgetId);
+      if (updErr) throw updErr;
+      setFloorPlanUrl(publicUrl);
+      toast.success("Planta anexada com sucesso!");
+    } catch (err) {
+      logger.error("floor plan upload error:", err);
+      toast.error("Erro ao anexar planta. Tente novamente.");
+    } finally {
+      setFloorPlanUploading(false);
+    }
+  };
+
+  const handleFloorPlanRemove = async () => {
+    try {
+      const { error } = await supabase
+        .from("budgets")
+        .update({ floor_plan_url: null })
+        .eq("id", budgetId);
+      if (error) throw error;
+      setFloorPlanUrl(null);
+      toast.success("Planta removida.");
+    } catch (err) {
+      logger.error("floor plan remove error:", err);
+      toast.error("Erro ao remover planta.");
+    }
+  };
+
   const addTourRow = () => {
     setTours(prev => [...prev, {
       room_id: `room-${Date.now()}`,
