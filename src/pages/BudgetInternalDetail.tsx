@@ -1502,6 +1502,7 @@ export default function BudgetInternalDetail() {
                     <BriefingPanel
                       budgetId={budget.id}
                       briefing={budget.briefing}
+                      legalBriefing={budget.legal_briefing}
                       demandContext={budget.demand_context}
                       internalNotes={budget.internal_notes}
                       links={links as string[]}
