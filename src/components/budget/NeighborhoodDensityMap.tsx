@@ -608,7 +608,7 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
 
         {/* Right panel: vertical (desktop) / horizontal snap (mobile) carousel of all projects */}
         <section
-          className="flex-[2] md:max-h-[600px] flex flex-col bg-card border border-border rounded-xl overflow-hidden"
+          className="flex-[2] max-h-[420px] md:max-h-[600px] flex flex-col bg-card border border-border rounded-xl overflow-hidden"
           aria-labelledby="neighborhood-projects-heading"
           aria-describedby="neighborhood-projects-help"
         >
@@ -869,7 +869,7 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
         className={cn(
           "group/card rounded-xl border overflow-hidden bg-card outline-none",
           "transition-[transform,box-shadow,border-color] duration-300 ease-out will-change-transform",
-          "max-md:min-w-[260px] max-md:snap-start max-md:flex-shrink-0",
+          "max-md:w-[260px] max-md:flex-none max-md:snap-start",
           "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           isHighlighted
             ? "border-primary ring-4 ring-primary/40 shadow-xl shadow-primary/20 -translate-y-0.5 scale-[1.015]"
