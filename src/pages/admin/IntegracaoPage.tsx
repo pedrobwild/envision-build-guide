@@ -911,7 +911,7 @@ function WebhookDialog({
       };
 
       if (existing) {
-        const { error } = await supabase
+        const { error } = await db
           .from("integration_webhooks")
           .update(payload)
           .eq("id", existing.id);
@@ -919,7 +919,7 @@ function WebhookDialog({
         toast.success("Webhook atualizado.");
       } else {
         if (!userId) throw new Error("Usuário não autenticado.");
-        const { error } = await supabase
+        const { error } = await db
           .from("integration_webhooks")
           .insert({ ...payload, created_by: userId });
         if (error) throw error;
