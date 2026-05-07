@@ -1134,25 +1134,49 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
         )}
 
         {/* Confirmation dialog for bulk delete */}
-        <AlertDialog open={!!confirmDialog} onOpenChange={(open) => !open && !bulkDeleting && setConfirmDialog(null)}>
+        <AlertDialog open={!!confirmDialog} onOpenChange={(open) => { if (!open && !bulkDeleting) { setConfirmDialog(null); setConfirmAllText(""); } }}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>
+                {confirmDialog?.kind === "single" && "Apagar esta foto?"}
                 {confirmDialog?.kind === "selected" && "Apagar mídias selecionadas?"}
-                {confirmDialog?.kind === "all-tab" && `Limpar a aba "${currentTab.label}"?`}
-                {confirmDialog?.kind === "all" && "Apagar todas as mídias do orçamento?"}
+                {confirmDialog?.kind === "all-tab" && `Apagar ${currentTab.label}?`}
+                {confirmDialog?.kind === "all" && "⚠️ Apagar TODAS as mídias deste orçamento?"}
               </AlertDialogTitle>
-              <AlertDialogDescription>
-                {confirmDialog?.kind === "selected" && `Você está prestes a apagar ${confirmDialog.count} arquivo(s). Esta ação é permanente e não pode ser desfeita.`}
-                {confirmDialog?.kind === "all-tab" && `Você está prestes a apagar todos os ${confirmDialog.count} arquivo(s) desta aba. Esta ação é permanente e não pode ser desfeita.`}
-                {confirmDialog?.kind === "all" && `Você está prestes a apagar TODAS as ${confirmDialog.count} mídias deste orçamento (renders 3D, fotos, projeto executivo e vídeo). Esta ação é permanente e não pode ser desfeita.`}
+              <AlertDialogDescription asChild>
+                <div className="space-y-3">
+                  {confirmDialog?.kind === "single" && (
+                    <span className="block">Esta ação é permanente e não pode ser desfeita.</span>
+                  )}
+                  {confirmDialog?.kind === "selected" && (
+                    <span className="block">Você está prestes a apagar {confirmDialog.count} arquivo(s). Esta ação é permanente e não pode ser desfeita.</span>
+                  )}
+                  {confirmDialog?.kind === "all-tab" && (
+                    <span className="block">Você está prestes a apagar todos os {confirmDialog.count} arquivo(s) de "{currentTab.label}". Esta ação é permanente e não pode ser desfeita.</span>
+                  )}
+                  {confirmDialog?.kind === "all" && (
+                    <>
+                      <span className="block font-semibold text-destructive">
+                        ATENÇÃO: você vai apagar TODAS as mídias deste orçamento ({confirmDialog.count} arquivos em todas as abas — Renders 3D, Fotos, Projeto Executivo e Vídeo).
+                      </span>
+                      <span className="block">Esta ação é permanente e não pode ser desfeita. Digite <strong>APAGAR</strong> abaixo para liberar a confirmação.</span>
+                      <Input
+                        value={confirmAllText}
+                        onChange={(e) => setConfirmAllText(e.target.value)}
+                        placeholder="Digite APAGAR"
+                        autoFocus
+                        className="font-mono"
+                      />
+                    </>
+                  )}
+                </div>
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel disabled={bulkDeleting}>Cancelar</AlertDialogCancel>
               <AlertDialogAction
                 onClick={(e) => { e.preventDefault(); handleConfirmDelete(); }}
-                disabled={bulkDeleting}
+                disabled={bulkDeleting || (confirmDialog?.kind === "all" && confirmAllText.trim() !== "APAGAR")}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 {bulkDeleting ? (
