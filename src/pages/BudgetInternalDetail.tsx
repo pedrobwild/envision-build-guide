@@ -1896,6 +1896,7 @@ function OwnerField({
 function BriefingPanel({
   budgetId,
   briefing,
+  legalBriefing,
   demandContext,
   internalNotes,
   links,
@@ -1903,11 +1904,13 @@ function BriefingPanel({
 }: {
   budgetId: string;
   briefing: string | null;
+  legalBriefing: string | null;
   demandContext: string | null;
   internalNotes: string | null;
   links: string[];
   onChange: (patch: {
     briefing?: string | null;
+    legal_briefing?: string | null;
     demand_context?: string | null;
     internal_notes?: string | null;
     reference_links?: string[];
@@ -1944,6 +1947,20 @@ function BriefingPanel({
             .eq("id", budgetId);
           if (error) throw error;
           onChange({ demand_context: next });
+        }}
+      />
+
+      <EditableSection
+        title="Briefing para jurídico"
+        value={legalBriefing}
+        placeholder="Informações específicas para o jurídico: cláusulas especiais, condições contratuais, restrições legais, particularidades do contrato…"
+        onSave={async (next) => {
+          const { error } = await supabase
+            .from("budgets")
+            .update({ legal_briefing: next, updated_at: new Date().toISOString() })
+            .eq("id", budgetId);
+          if (error) throw error;
+          onChange({ legal_briefing: next });
         }}
       />
 
