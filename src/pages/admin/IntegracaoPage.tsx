@@ -362,7 +362,7 @@ function TokensSection({
 
     setRevoking(token.id);
     try {
-      const { error } = await supabase.rpc("revoke_personal_access_token", { p_id: token.id });
+      const { error } = await db.rpc("revoke_personal_access_token", { p_id: token.id });
       if (error) throw error;
       toast.success("Token revogado.");
       onRevoked();
@@ -513,7 +513,7 @@ function GenerateTokenDialog({
           ? null
           : new Date(Date.now() + Number(expiry) * 24 * 60 * 60 * 1000).toISOString();
 
-      const { data, error } = await supabase.rpc("create_personal_access_token", {
+      const { data, error } = await db.rpc("create_personal_access_token", {
         p_name: name.trim(),
         p_scopes: scopes,
         p_expires_at: expiresAt,
@@ -714,7 +714,7 @@ function WebhooksSection({
 
     setBusyId(w.id);
     try {
-      const { error } = await supabase.from("integration_webhooks").delete().eq("id", w.id);
+      const { error } = await db.from("integration_webhooks").delete().eq("id", w.id);
       if (error) throw error;
       toast.success("Webhook removido.");
       onChanged();
