@@ -116,6 +116,7 @@ interface BudgetDetail {
   commercial_owner_id: string | null;
   estimator_owner_id: string | null;
   briefing: string | null;
+  legal_briefing: string | null;
   demand_context: string | null;
   internal_notes: string | null;
   reference_links: string[] | null;
@@ -322,7 +323,7 @@ export default function BudgetInternalDetail() {
         supabase
           .from("budgets")
           .select(
-            "id, project_name, client_id, client_name, client_phone, lead_email, lead_name, property_type, city, bairro, metragem, condominio, unit, internal_status, priority, due_at, created_at, updated_at, created_by, commercial_owner_id, estimator_owner_id, briefing, demand_context, internal_notes, reference_links, notes, status, public_id, sequential_code, manual_total, estimated_weeks, pipeline_stage, win_probability, expected_close_at, lead_source, payment_method, payment_installments, prazo_dias_uteis, is_current_version, version_group_id, version_number, property_id"
+            "id, project_name, client_id, client_name, client_phone, lead_email, lead_name, property_type, city, bairro, metragem, condominio, unit, internal_status, priority, due_at, created_at, updated_at, created_by, commercial_owner_id, estimator_owner_id, briefing, legal_briefing, demand_context, internal_notes, reference_links, notes, status, public_id, sequential_code, manual_total, estimated_weeks, pipeline_stage, win_probability, expected_close_at, lead_source, payment_method, payment_installments, prazo_dias_uteis, is_current_version, version_group_id, version_number, property_id"
           )
           .eq("id", id)
           .single(),
@@ -1501,6 +1502,7 @@ export default function BudgetInternalDetail() {
                     <BriefingPanel
                       budgetId={budget.id}
                       briefing={budget.briefing}
+                      legalBriefing={budget.legal_briefing}
                       demandContext={budget.demand_context}
                       internalNotes={budget.internal_notes}
                       links={links as string[]}
@@ -1894,6 +1896,7 @@ function OwnerField({
 function BriefingPanel({
   budgetId,
   briefing,
+  legalBriefing,
   demandContext,
   internalNotes,
   links,
@@ -1901,11 +1904,13 @@ function BriefingPanel({
 }: {
   budgetId: string;
   briefing: string | null;
+  legalBriefing: string | null;
   demandContext: string | null;
   internalNotes: string | null;
   links: string[];
   onChange: (patch: {
     briefing?: string | null;
+    legal_briefing?: string | null;
     demand_context?: string | null;
     internal_notes?: string | null;
     reference_links?: string[];
@@ -1942,6 +1947,20 @@ function BriefingPanel({
             .eq("id", budgetId);
           if (error) throw error;
           onChange({ demand_context: next });
+        }}
+      />
+
+      <EditableSection
+        title="Briefing para jurídico"
+        value={legalBriefing}
+        placeholder="Informações específicas para o jurídico: cláusulas especiais, condições contratuais, restrições legais, particularidades do contrato…"
+        onSave={async (next) => {
+          const { error } = await supabase
+            .from("budgets")
+            .update({ legal_briefing: next, updated_at: new Date().toISOString() })
+            .eq("id", budgetId);
+          if (error) throw error;
+          onChange({ legal_briefing: next });
         }}
       />
 

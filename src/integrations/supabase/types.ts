@@ -1010,6 +1010,7 @@ export type Database = {
           lead_email: string | null
           lead_name: string | null
           lead_source: string | null
+          legal_briefing: string | null
           location_type: string | null
           manual_total: number | null
           media_config: Json | null
@@ -1106,6 +1107,7 @@ export type Database = {
           lead_email?: string | null
           lead_name?: string | null
           lead_source?: string | null
+          legal_briefing?: string | null
           location_type?: string | null
           manual_total?: number | null
           media_config?: Json | null
@@ -1202,6 +1204,7 @@ export type Database = {
           lead_email?: string | null
           lead_name?: string | null
           lead_source?: string | null
+          legal_briefing?: string | null
           location_type?: string | null
           manual_total?: number | null
           media_config?: Json | null
