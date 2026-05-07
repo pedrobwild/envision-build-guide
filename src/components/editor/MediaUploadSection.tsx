@@ -237,6 +237,11 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
   const [toursLoading, setToursLoading] = useState(false);
   const [toursSaving, setToursSaving] = useState(false);
 
+  // Floor plan attachment state
+  const [floorPlanUrl, setFloorPlanUrl] = useState<string | null>(null);
+  const [floorPlanUploading, setFloorPlanUploading] = useState(false);
+  const floorPlanInputRef = useRef<HTMLInputElement>(null);
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -640,6 +645,70 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
 
   useEffect(() => { loadTours(); }, [loadTours]);
 
+  // Load floor plan URL
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("budgets")
+        .select("floor_plan_url")
+        .eq("id", budgetId)
+        .maybeSingle();
+      if (!cancelled) setFloorPlanUrl(data?.floor_plan_url ?? null);
+    })();
+    return () => { cancelled = true; };
+  }, [budgetId]);
+
+  const handleFloorPlanUpload = async (file: File | null | undefined) => {
+    if (!file) return;
+    const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+    const isPng = file.type === "image/png" || /\.png$/i.test(file.name);
+    if (!isPdf && !isPng) {
+      toast.error("Apenas arquivos PDF ou PNG são aceitos.");
+      return;
+    }
+    setFloorPlanUploading(true);
+    try {
+      const ext = isPdf ? "pdf" : "png";
+      const path = `floor-plans/${budgetId}-${Date.now()}.${ext}`;
+      await uploadWithRetry({
+        bucket: "budget-assets",
+        path,
+        file,
+        upsert: true,
+        contentType: isPdf ? "application/pdf" : "image/png",
+      });
+      const { data: { publicUrl } } = supabase.storage.from("budget-assets").getPublicUrl(path);
+      const { error: updErr } = await supabase
+        .from("budgets")
+        .update({ floor_plan_url: publicUrl })
+        .eq("id", budgetId);
+      if (updErr) throw updErr;
+      setFloorPlanUrl(publicUrl);
+      toast.success("Planta anexada com sucesso!");
+    } catch (err) {
+      logger.error("floor plan upload error:", err);
+      toast.error("Erro ao anexar planta. Tente novamente.");
+    } finally {
+      setFloorPlanUploading(false);
+    }
+  };
+
+  const handleFloorPlanRemove = async () => {
+    try {
+      const { error } = await supabase
+        .from("budgets")
+        .update({ floor_plan_url: null })
+        .eq("id", budgetId);
+      if (error) throw error;
+      setFloorPlanUrl(null);
+      toast.success("Planta removida.");
+    } catch (err) {
+      logger.error("floor plan remove error:", err);
+      toast.error("Erro ao remover planta.");
+    }
+  };
+
   const addTourRow = () => {
     setTours(prev => [...prev, {
       room_id: `room-${Date.now()}`,
@@ -696,6 +765,66 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
           <p className="text-xs text-muted-foreground font-body mt-0.5">
             Faça upload de renders 3D, fotos, projetos executivos e vídeos. Arraste para reordenar.
           </p>
+        </div>
+
+        {/* Floor plan attachment */}
+        <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div>
+              <h4 className="font-display font-semibold text-sm text-foreground flex items-center gap-1.5">
+                <FileText className="h-4 w-4 text-primary" />
+                Planta do imóvel
+              </h4>
+              <p className="text-[11px] text-muted-foreground font-body mt-0.5">
+                Anexe a planta em PDF ou PNG. Uso interno do orçamentista.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => floorPlanInputRef.current?.click()}
+                disabled={floorPlanUploading}
+                className="gap-2"
+              >
+                {floorPlanUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                {floorPlanUrl ? "Substituir" : "Anexar planta"}
+              </Button>
+              {floorPlanUrl && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleFloorPlanRemove}
+                  disabled={floorPlanUploading}
+                  className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Remover
+                </Button>
+              )}
+            </div>
+          </div>
+          <input
+            ref={floorPlanInputRef}
+            type="file"
+            accept="application/pdf,image/png,.pdf,.png"
+            className="hidden"
+            onChange={(e) => {
+              handleFloorPlanUpload(e.target.files?.[0]);
+              if (e.target) e.target.value = "";
+            }}
+          />
+          {floorPlanUrl && (
+            <a
+              href={floorPlanUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-body text-primary hover:underline break-all inline-flex items-center gap-1"
+            >
+              <FileText className="h-3 w-3" />
+              Abrir planta anexada
+            </a>
+          )}
         </div>
 
         {/* Tabs */}
