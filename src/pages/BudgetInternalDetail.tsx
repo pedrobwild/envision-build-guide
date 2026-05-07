@@ -462,7 +462,7 @@ export default function BudgetInternalDetail() {
 
     loadAllData();
     return () => { cancelled = true; };
-  }, [budgetId, user]);
+  }, [budgetId, user, isValidUuid]);
 
   // Fetch sync status for this budget
   useEffect(() => {
