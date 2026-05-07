@@ -288,10 +288,25 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
       fotos,
       primary: safePrimary,
     };
-    await supabase
+    const { error } = await supabase
       .from("budgets")
       .update({ media_config: mediaConfig as unknown as Json })
       .eq("id", budgetId);
+    if (error) {
+      const msg = `${error.message ?? ""} ${(error as { details?: string }).details ?? ""}`;
+      if (msg.includes("published_budget_immutable")) {
+        toast.error("Não foi possível salvar a foto. Verifique se o orçamento permite edição ou crie uma nova versão.");
+        logger.error("[media-upload] published_budget_immutable", {
+          budgetId,
+          action: "syncMediaConfig",
+          error,
+        });
+      } else {
+        toast.error("Erro ao salvar configuração de mídia. Tente novamente.");
+        logger.error("[media-upload] syncMediaConfig failed", { budgetId, error });
+      }
+      throw error;
+    }
   }, [budgetId]);
 
   const loadFiles = useCallback(async (syncToDb = false) => {
