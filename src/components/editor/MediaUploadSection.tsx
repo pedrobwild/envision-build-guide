@@ -229,7 +229,7 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
   const [selectionMode, setSelectionMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
-  const [confirmDialog, setConfirmDialog] = useState<null | { kind: "selected" | "all-tab" | "all"; count: number }>(null);
+  const [confirmDialog, setConfirmDialog] = useState<null | { kind: "selected" | "all-tab" | "all"; count: number } | { kind: "single"; tab: StorageTab; fileName: string }>(null);
   const [confirmAllText, setConfirmAllText] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -465,21 +465,9 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
     }
   };
 
-  const handleDelete = async (tab: StorageTab, fileName: string) => {
-    const path = `${folderMap[tab]}/${fileName}`;
-    try {
-      const { error } = await supabase.storage.from("media").remove([path]);
-      if (error) {
-        toast.error("Erro ao remover arquivo.");
-      } else {
-        toast.success("Arquivo removido.");
-        await loadFiles(true);
-      }
-    } catch (err) {
-      logger.error("handleDelete error:", err);
-      toast.error("Erro ao remover arquivo.");
-    }
-  };
+  const handleDelete = useCallback((tab: StorageTab, fileName: string) => {
+    setConfirmDialog({ kind: "single", tab, fileName });
+  }, []);
 
   /* ── Selection helpers ── */
   const toggleSelect = useCallback((name: string) => {
@@ -564,6 +552,12 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
   const handleConfirmDelete = useCallback(async () => {
     if (!confirmDialog) return;
 
+    if (confirmDialog.kind === "single") {
+      const path = `${folderMap[confirmDialog.tab]}/${confirmDialog.fileName}`;
+      await performBulkDelete([path], `Arquivo removido.`);
+      return;
+    }
+
     if (confirmDialog.kind === "selected") {
       if (activeTab === "tour3d") return;
       const folder = folderMap[activeTab as StorageTab];
@@ -581,13 +575,14 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
     }
 
     if (confirmDialog.kind === "all") {
+      logger.warn("[media-delete] APAGAR TUDO acionado", { budgetId, publicId });
       const allPaths: string[] = [];
       (Object.keys(folderMap) as StorageTab[]).forEach(tab => {
         files[tab].forEach(f => allPaths.push(`${folderMap[tab]}/${f.name}`));
       });
       await performBulkDelete(allPaths, `Todas as mídias apagadas (${allPaths.length} arquivo(s)).`);
     }
-  }, [confirmDialog, activeTab, folderMap, selected, files, performBulkDelete]);
+  }, [confirmDialog, activeTab, folderMap, selected, files, performBulkDelete, budgetId, publicId]);
 
   const totalAllTabs = Object.values(files).reduce((sum, arr) => sum + arr.length, 0);
 
@@ -1008,7 +1003,7 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
                         className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
                       >
                         <Trash2 className="h-4 w-4" />
-                        Limpar aba
+                        Apagar {currentTab.label}
                       </Button>
                     </>
                   )}
@@ -1019,10 +1014,10 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
                       size="sm"
                       onClick={() => setConfirmDialog({ kind: "all", count: totalAllTabs })}
                       disabled={uploading || reordering || bulkDeleting}
-                      className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10 ml-auto"
+                      className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/40 ml-auto"
                     >
                       <Trash2 className="h-4 w-4" />
-                      Apagar todas as mídias
+                      Apagar TUDO
                     </Button>
                   )}
 
@@ -1139,25 +1134,49 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
         )}
 
         {/* Confirmation dialog for bulk delete */}
-        <AlertDialog open={!!confirmDialog} onOpenChange={(open) => !open && !bulkDeleting && setConfirmDialog(null)}>
+        <AlertDialog open={!!confirmDialog} onOpenChange={(open) => { if (!open && !bulkDeleting) { setConfirmDialog(null); setConfirmAllText(""); } }}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>
+                {confirmDialog?.kind === "single" && "Apagar esta foto?"}
                 {confirmDialog?.kind === "selected" && "Apagar mídias selecionadas?"}
-                {confirmDialog?.kind === "all-tab" && `Limpar a aba "${currentTab.label}"?`}
-                {confirmDialog?.kind === "all" && "Apagar todas as mídias do orçamento?"}
+                {confirmDialog?.kind === "all-tab" && `Apagar ${currentTab.label}?`}
+                {confirmDialog?.kind === "all" && "⚠️ Apagar TODAS as mídias deste orçamento?"}
               </AlertDialogTitle>
-              <AlertDialogDescription>
-                {confirmDialog?.kind === "selected" && `Você está prestes a apagar ${confirmDialog.count} arquivo(s). Esta ação é permanente e não pode ser desfeita.`}
-                {confirmDialog?.kind === "all-tab" && `Você está prestes a apagar todos os ${confirmDialog.count} arquivo(s) desta aba. Esta ação é permanente e não pode ser desfeita.`}
-                {confirmDialog?.kind === "all" && `Você está prestes a apagar TODAS as ${confirmDialog.count} mídias deste orçamento (renders 3D, fotos, projeto executivo e vídeo). Esta ação é permanente e não pode ser desfeita.`}
+              <AlertDialogDescription asChild>
+                <div className="space-y-3">
+                  {confirmDialog?.kind === "single" && (
+                    <span className="block">Esta ação é permanente e não pode ser desfeita.</span>
+                  )}
+                  {confirmDialog?.kind === "selected" && (
+                    <span className="block">Você está prestes a apagar {confirmDialog.count} arquivo(s). Esta ação é permanente e não pode ser desfeita.</span>
+                  )}
+                  {confirmDialog?.kind === "all-tab" && (
+                    <span className="block">Você está prestes a apagar todos os {confirmDialog.count} arquivo(s) de "{currentTab.label}". Esta ação é permanente e não pode ser desfeita.</span>
+                  )}
+                  {confirmDialog?.kind === "all" && (
+                    <>
+                      <span className="block font-semibold text-destructive">
+                        ATENÇÃO: você vai apagar TODAS as mídias deste orçamento ({confirmDialog.count} arquivos em todas as abas — Renders 3D, Fotos, Projeto Executivo e Vídeo).
+                      </span>
+                      <span className="block">Esta ação é permanente e não pode ser desfeita. Digite <strong>APAGAR</strong> abaixo para liberar a confirmação.</span>
+                      <Input
+                        value={confirmAllText}
+                        onChange={(e) => setConfirmAllText(e.target.value)}
+                        placeholder="Digite APAGAR"
+                        autoFocus
+                        className="font-mono"
+                      />
+                    </>
+                  )}
+                </div>
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel disabled={bulkDeleting}>Cancelar</AlertDialogCancel>
               <AlertDialogAction
                 onClick={(e) => { e.preventDefault(); handleConfirmDelete(); }}
-                disabled={bulkDeleting}
+                disabled={bulkDeleting || (confirmDialog?.kind === "all" && confirmAllText.trim() !== "APAGAR")}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 {bulkDeleting ? (
