@@ -44,6 +44,12 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
+// Tabelas/RPCs ainda não presentes nos tipos gerados (personal_access_tokens,
+// integration_webhooks, create_/revoke_personal_access_token). Usamos um alias
+// tipado como `any` apenas nessas chamadas para destravar o build sem perder
+// segurança nas demais consultas do projeto.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const db = supabase as any;
 import { useConfirm } from "@/hooks/useConfirm";
 import { logger } from "@/lib/logger";
 import { formatDate } from "@/lib/formatBRL";
