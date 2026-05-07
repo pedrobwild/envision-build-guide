@@ -117,6 +117,7 @@ interface BudgetDetail {
   estimator_owner_id: string | null;
   briefing: string | null;
   legal_briefing: string | null;
+  closed_budget_pdf_url: string | null;
   demand_context: string | null;
   internal_notes: string | null;
   reference_links: string[] | null;
@@ -323,7 +324,7 @@ export default function BudgetInternalDetail() {
         supabase
           .from("budgets")
           .select(
-            "id, project_name, client_id, client_name, client_phone, lead_email, lead_name, property_type, city, bairro, metragem, condominio, unit, internal_status, priority, due_at, created_at, updated_at, created_by, commercial_owner_id, estimator_owner_id, briefing, legal_briefing, demand_context, internal_notes, reference_links, notes, status, public_id, sequential_code, manual_total, estimated_weeks, pipeline_stage, win_probability, expected_close_at, lead_source, payment_method, payment_installments, prazo_dias_uteis, is_current_version, version_group_id, version_number, property_id"
+            "id, project_name, client_id, client_name, client_phone, lead_email, lead_name, property_type, city, bairro, metragem, condominio, unit, internal_status, priority, due_at, created_at, updated_at, created_by, commercial_owner_id, estimator_owner_id, briefing, legal_briefing, closed_budget_pdf_url, demand_context, internal_notes, reference_links, notes, status, public_id, sequential_code, manual_total, estimated_weeks, pipeline_stage, win_probability, expected_close_at, lead_source, payment_method, payment_installments, prazo_dias_uteis, is_current_version, version_group_id, version_number, property_id"
           )
           .eq("id", id)
           .single(),
@@ -1503,6 +1504,7 @@ export default function BudgetInternalDetail() {
                       budgetId={budget.id}
                       briefing={budget.briefing}
                       legalBriefing={budget.legal_briefing}
+                      closedBudgetPdfUrl={budget.closed_budget_pdf_url}
                       demandContext={budget.demand_context}
                       internalNotes={budget.internal_notes}
                       links={links as string[]}
@@ -1897,6 +1899,7 @@ function BriefingPanel({
   budgetId,
   briefing,
   legalBriefing,
+  closedBudgetPdfUrl,
   demandContext,
   internalNotes,
   links,
@@ -1905,12 +1908,14 @@ function BriefingPanel({
   budgetId: string;
   briefing: string | null;
   legalBriefing: string | null;
+  closedBudgetPdfUrl: string | null;
   demandContext: string | null;
   internalNotes: string | null;
   links: string[];
   onChange: (patch: {
     briefing?: string | null;
     legal_briefing?: string | null;
+    closed_budget_pdf_url?: string | null;
     demand_context?: string | null;
     internal_notes?: string | null;
     reference_links?: string[];
@@ -1964,6 +1969,12 @@ function BriefingPanel({
         }}
       />
 
+      <ClosedBudgetPdfSection
+        budgetId={budgetId}
+        url={closedBudgetPdfUrl}
+        onChange={(next) => onChange({ closed_budget_pdf_url: next })}
+      />
+
       <EditableSection
         title="Observações Internas"
         tone="warning"
@@ -1990,6 +2001,131 @@ function BriefingPanel({
           onChange({ reference_links: next });
         }}
       />
+    </div>
+  );
+}
+
+function ClosedBudgetPdfSection({
+  budgetId,
+  url,
+  onChange,
+}: {
+  budgetId: string;
+  url: string | null;
+  onChange: (next: string | null) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+      toast.error("Apenas arquivos PDF são aceitos");
+      return;
+    }
+    setUploading(true);
+    try {
+      const path = `${budgetId}/closed-budget-${Date.now()}.pdf`;
+      const { error: upErr } = await supabase.storage
+        .from("budget-assets")
+        .upload(path, file, { upsert: true, contentType: "application/pdf" });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("budget-assets").getPublicUrl(path);
+      const publicUrl = pub.publicUrl;
+      const { error: updErr } = await supabase
+        .from("budgets")
+        .update({ closed_budget_pdf_url: publicUrl, updated_at: new Date().toISOString() })
+        .eq("id", budgetId);
+      if (updErr) throw updErr;
+      onChange(publicUrl);
+      toast.success("PDF do orçamento fechado anexado");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erro desconhecido";
+      toast.error(`Falha ao anexar PDF: ${msg}`);
+    } finally {
+      setUploading(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  }
+
+  async function handleRemove() {
+    try {
+      const { error } = await supabase
+        .from("budgets")
+        .update({ closed_budget_pdf_url: null, updated_at: new Date().toISOString() })
+        .eq("id", budgetId);
+      if (error) throw error;
+      onChange(null);
+      toast.success("PDF removido");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erro desconhecido";
+      toast.error(`Falha ao remover: ${msg}`);
+    }
+  }
+
+  return (
+    <div className="rounded-lg border border-border bg-muted/20 p-4">
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <h4 className="text-[11px] font-display font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+          <FileText className="h-3 w-3" />
+          PDF do orçamento fechado
+        </h4>
+      </div>
+      <p className="text-[11px] text-muted-foreground font-body mb-3">
+        Anexe o PDF do orçamento que foi efetivamente fechado com o cliente.
+      </p>
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept="application/pdf,.pdf"
+        className="hidden"
+        onChange={handleUpload}
+      />
+
+      {url ? (
+        <div className="flex items-center justify-between gap-2 rounded-md border border-border bg-background px-3 py-2">
+          <a
+            href={url}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-2 text-sm text-primary hover:underline truncate"
+          >
+            <FileText className="h-4 w-4 shrink-0" />
+            <span className="truncate">Abrir PDF anexado</span>
+          </a>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => inputRef.current?.click()}
+              disabled={uploading}
+            >
+              {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Substituir"}
+            </Button>
+            <Button variant="ghost" size="sm" onClick={handleRemove} disabled={uploading}>
+              Remover
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => inputRef.current?.click()}
+          disabled={uploading}
+        >
+          {uploading ? (
+            <>
+              <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+              Enviando…
+            </>
+          ) : (
+            "Anexar PDF"
+          )}
+        </Button>
+      )}
     </div>
   );
 }
