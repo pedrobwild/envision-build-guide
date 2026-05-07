@@ -229,7 +229,7 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
   const [selectionMode, setSelectionMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
-  const [confirmDialog, setConfirmDialog] = useState<null | { kind: "selected" | "all-tab" | "all"; count: number }>(null);
+  const [confirmDialog, setConfirmDialog] = useState<null | { kind: "selected" | "all-tab" | "all"; count: number } | { kind: "single"; tab: StorageTab; fileName: string }>(null);
   const [confirmAllText, setConfirmAllText] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
