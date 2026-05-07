@@ -54,6 +54,7 @@ const MetasHistoryPage = lazy(() => import("./pages/MetasHistoryPage"));
 const AgendaPage = lazy(() => import("./pages/AgendaPage"));
 const InsightsPage = lazy(() => import("./pages/InsightsPage"));
 const DigisacPage = lazy(() => import("./pages/DigisacPage"));
+const IntegracaoPage = lazy(() => import("./pages/admin/IntegracaoPage"));
 const BudgetDiagnosticsPage = lazy(() => import("./pages/BudgetDiagnosticsPage"));
 const BugReportsPage = lazy(() => import("./pages/BugReportsPage"));
 const ComercialHome = lazy(() => import("./pages/painel/ComercialHome"));
@@ -151,6 +152,7 @@ const App = () => (
                     <Route path="/admin/agenda" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial", "orcamentista"]}><AgendaPage /></RoleGuard></AdminPage>}/>
                     <Route path="/admin/insights" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial", "orcamentista"]}><InsightsPage /></RoleGuard></AdminPage>}/>
                     <Route path="/admin/digisac" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><DigisacPage /></RoleGuard></AdminPage>}/>
+                    <Route path="/admin/integracao" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><IntegracaoPage /></RoleGuard></AdminPage>}/>
                     <Route path="/o/:publicId" element={<PublicBudget />} />
                     <Route path="/admin/budget/:adminPreviewBudgetId/preview-publica" element={<ProtectedRoute><RoleGuard allowedRoles={["admin", "orcamentista", "comercial"]}><PublicBudget /></RoleGuard></ProtectedRoute>} />
                     <Route path="/obra/:publicId/orcamento" element={<OrcamentoPage />} />
