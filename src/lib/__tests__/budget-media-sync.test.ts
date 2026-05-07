@@ -69,10 +69,9 @@ describe("syncMediaConfigFromStorage", () => {
     storageState.set("pid-custom/video", []);
 
     const res = await syncMediaConfigFromStorage("b2", "pid-custom");
-    expect(res.synced).toBe(true);
+    if (!res.synced) throw new Error("expected synced");
     expect(res.reason).toBe("storage_has_files");
     expect(res.counts.fotos).toBe(2);
-    if (!res.synced) throw new Error("expected synced");
     const mc = budgetsState.get("b2")?.media_config as { fotos: string[]; projeto3d: string[] };
     expect(mc.fotos).toEqual([
       "https://cdn.test/pid-custom/fotos/01-foto-cliente.jpg",
