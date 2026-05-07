@@ -44,6 +44,12 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
+// Tabelas/RPCs ainda não presentes nos tipos gerados (personal_access_tokens,
+// integration_webhooks, create_/revoke_personal_access_token). Usamos um alias
+// tipado como `any` apenas nessas chamadas para destravar o build sem perder
+// segurança nas demais consultas do projeto.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const db = supabase as any;
 import { useConfirm } from "@/hooks/useConfirm";
 import { logger } from "@/lib/logger";
 import { formatDate } from "@/lib/formatBRL";
@@ -162,11 +168,11 @@ export default function IntegracaoPage() {
     setLoading(true);
     try {
       const [tokenRes, webhookRes] = await Promise.all([
-        supabase
+        db
           .from("personal_access_tokens")
           .select("id, name, token_prefix, scopes, last_used_at, expires_at, revoked_at, created_at")
           .order("created_at", { ascending: false }),
-        supabase
+        db
           .from("integration_webhooks")
           .select(
             "id, name, url, secret, events, active, description, last_triggered_at, last_status, failure_count, created_at, updated_at",
@@ -356,7 +362,7 @@ function TokensSection({
 
     setRevoking(token.id);
     try {
-      const { error } = await supabase.rpc("revoke_personal_access_token", { p_id: token.id });
+      const { error } = await db.rpc("revoke_personal_access_token", { p_id: token.id });
       if (error) throw error;
       toast.success("Token revogado.");
       onRevoked();
@@ -507,7 +513,7 @@ function GenerateTokenDialog({
           ? null
           : new Date(Date.now() + Number(expiry) * 24 * 60 * 60 * 1000).toISOString();
 
-      const { data, error } = await supabase.rpc("create_personal_access_token", {
+      const { data, error } = await db.rpc("create_personal_access_token", {
         p_name: name.trim(),
         p_scopes: scopes,
         p_expires_at: expiresAt,
@@ -682,7 +688,7 @@ function WebhooksSection({
   async function handleToggle(w: WebhookRow) {
     setBusyId(w.id);
     try {
-      const { error } = await supabase
+      const { error } = await db
         .from("integration_webhooks")
         .update({ active: !w.active })
         .eq("id", w.id);
@@ -708,7 +714,7 @@ function WebhooksSection({
 
     setBusyId(w.id);
     try {
-      const { error } = await supabase.from("integration_webhooks").delete().eq("id", w.id);
+      const { error } = await db.from("integration_webhooks").delete().eq("id", w.id);
       if (error) throw error;
       toast.success("Webhook removido.");
       onChanged();
@@ -905,7 +911,7 @@ function WebhookDialog({
       };
 
       if (existing) {
-        const { error } = await supabase
+        const { error } = await db
           .from("integration_webhooks")
           .update(payload)
           .eq("id", existing.id);
@@ -913,7 +919,7 @@ function WebhookDialog({
         toast.success("Webhook atualizado.");
       } else {
         if (!userId) throw new Error("Usuário não autenticado.");
-        const { error } = await supabase
+        const { error } = await db
           .from("integration_webhooks")
           .insert({ ...payload, created_by: userId });
         if (error) throw error;
