@@ -2723,6 +2723,67 @@ export type Database = {
           },
         ]
       }
+      media_change_log: {
+        Row: {
+          budget_id: string
+          change_type: string
+          changed_at: string
+          changed_by: string | null
+          id: string
+          new_media_config: Json | null
+          notes: string | null
+          old_media_config: Json | null
+          public_id: string | null
+          source: string
+        }
+        Insert: {
+          budget_id: string
+          change_type: string
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_media_config?: Json | null
+          notes?: string | null
+          old_media_config?: Json | null
+          public_id?: string | null
+          source?: string
+        }
+        Update: {
+          budget_id?: string
+          change_type?: string
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_media_config?: Json | null
+          notes?: string | null
+          old_media_config?: Json | null
+          public_id?: string | null
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_change_log_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budget_pipeline_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "media_change_log_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "media_change_log_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales_budgets_enriched"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       media_integrity_alerts: {
         Row: {
           acknowledged_at: string | null
