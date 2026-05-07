@@ -175,6 +175,8 @@ const TOOL_GROUPS: ToolGroup[] = [
       { title: "Sistema", url: "/admin/sistema", icon: Wrench, roles: ["admin"] },
       { title: "Saneamento", url: "/admin/imoveis-duplicados", icon: Copy, roles: ["admin", "orcamentista"] },
       { title: "Lixeira", url: "/admin/lixeira", icon: Trash2, roles: ["admin", "orcamentista"] },
+      { title: "Auditoria de acesso", url: "/admin/auditoria-acesso", icon: Shield, roles: ["admin", "orcamentista"] },
+      { title: "Auditoria de RPC", url: "/admin/auditoria-rpc", icon: Shield, roles: ["admin"] },
     ],
   },
 ];
