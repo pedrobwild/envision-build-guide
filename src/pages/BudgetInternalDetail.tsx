@@ -1504,6 +1504,7 @@ export default function BudgetInternalDetail() {
                       budgetId={budget.id}
                       briefing={budget.briefing}
                       legalBriefing={budget.legal_briefing}
+                      closedBudgetPdfUrl={budget.closed_budget_pdf_url}
                       demandContext={budget.demand_context}
                       internalNotes={budget.internal_notes}
                       links={links as string[]}
