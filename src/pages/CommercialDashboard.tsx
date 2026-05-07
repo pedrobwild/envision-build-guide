@@ -999,14 +999,16 @@ export default function CommercialDashboard() {
               )}
               {b.manual_total && b.manual_total > 0 ? (
                 <span
-                  className="inline-flex items-center text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-success/10 text-success tabular-nums"
+                  className="inline-flex items-center whitespace-nowrap text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-success/10 text-success tabular-nums"
                   onClick={(e) => e.stopPropagation()}
+                  title={`Valor da versão atual${b.version_number && b.version_number > 1 ? ` (V${b.version_number})` : ""}`}
                 >
                   <InlineEdit
                     type="currency"
                     value={b.manual_total}
                     onSave={(v) => updateBudgetField(b.id, "manual_total", v, "Valor")}
                     ariaLabel="Editar valor"
+                    className="whitespace-nowrap"
                   />
                 </span>
               ) : (
