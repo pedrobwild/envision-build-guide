@@ -237,6 +237,11 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
   const [toursLoading, setToursLoading] = useState(false);
   const [toursSaving, setToursSaving] = useState(false);
 
+  // Floor plan attachment state
+  const [floorPlanUrl, setFloorPlanUrl] = useState<string | null>(null);
+  const [floorPlanUploading, setFloorPlanUploading] = useState(false);
+  const floorPlanInputRef = useRef<HTMLInputElement>(null);
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
