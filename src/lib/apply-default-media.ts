@@ -31,7 +31,7 @@ export async function applyDefaultMediaWithGuardrail(
   // 1. Lê o estado atual do orçamento.
   const { data: current, error: readErr } = await supabase
     .from("budgets")
-    .select("media_config")
+    .select("media_config, public_id")
     .eq("id", budgetId)
     .maybeSingle();
 
@@ -49,6 +49,31 @@ export async function applyDefaultMediaWithGuardrail(
       `[media-guardrail] Orçamento ${budgetId} possui upload manual — replicação pulada.`
     );
     return { applied: false, reason: "manual_media_present" };
+  }
+
+  // 2b. GUARDRAIL EXTRA: mesmo sem media_config "manual" populado, se já existe
+  // qualquer arquivo no Storage do publicId atual, considera upload customizado
+  // e PULA. Protege contra re-injetar catálogo padrão por cima de fotos que o
+  // time subiu na aba Mídia mas que ainda não foram promovidas para media_config.
+  const publicId = (current as { public_id?: string | null })?.public_id;
+  if (publicId) {
+    const folders = ["3d", "fotos", "exec", "video"];
+    const counts = await Promise.all(
+      folders.map(async (f) => {
+        const { data } = await supabase.storage
+          .from("media")
+          .list(`${publicId}/${f}`, { limit: 1 });
+        return (data || []).filter(
+          (x) => x.name && !x.name.startsWith(".") && x.name !== ".emptyFolderPlaceholder"
+        ).length;
+      })
+    );
+    if (counts.some((n) => n > 0)) {
+      logger.debug(
+        `[media-guardrail] Orçamento ${budgetId} tem arquivos no Storage (${publicId}) — replicação pulada.`
+      );
+      return { applied: false, reason: "manual_media_present" };
+    }
   }
 
   // 3. Resolve mídia padrão (template explícito → primeiro ativo → hardcoded).
