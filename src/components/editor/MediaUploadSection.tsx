@@ -575,7 +575,7 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
     }
 
     if (confirmDialog.kind === "all") {
-      logger.warn("[media-delete] APAGAR TUDO acionado", { budgetId, publicId, total: totalAllTabs });
+      logger.warn("[media-delete] APAGAR TUDO acionado", { budgetId, publicId });
       const allPaths: string[] = [];
       (Object.keys(folderMap) as StorageTab[]).forEach(tab => {
         files[tab].forEach(f => allPaths.push(`${folderMap[tab]}/${f.name}`));
