@@ -688,7 +688,7 @@ function WebhooksSection({
   async function handleToggle(w: WebhookRow) {
     setBusyId(w.id);
     try {
-      const { error } = await supabase
+      const { error } = await db
         .from("integration_webhooks")
         .update({ active: !w.active })
         .eq("id", w.id);
