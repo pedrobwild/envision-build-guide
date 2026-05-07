@@ -352,6 +352,10 @@ export default function BudgetInternalDetail() {
   );
 
   useEffect(() => {
+    if (!isValidUuid) {
+      setLoading(false);
+      return;
+    }
     if (!budgetId || !user) return;
     const id = budgetId;
     let cancelled = false;
