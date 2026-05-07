@@ -1,0 +1,1 @@
+ALTER TABLE public.budgets ADD COLUMN IF NOT EXISTS closed_budget_pdf_url text;

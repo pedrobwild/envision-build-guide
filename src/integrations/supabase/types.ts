@@ -975,6 +975,7 @@ export type Database = {
           client_name: string
           client_phone: string | null
           closed_at: string | null
+          closed_budget_pdf_url: string | null
           commercial_owner_id: string | null
           condominio: string | null
           consultora_comercial: string | null
@@ -1072,6 +1073,7 @@ export type Database = {
           client_name?: string
           client_phone?: string | null
           closed_at?: string | null
+          closed_budget_pdf_url?: string | null
           commercial_owner_id?: string | null
           condominio?: string | null
           consultora_comercial?: string | null
@@ -1169,6 +1171,7 @@ export type Database = {
           client_name?: string
           client_phone?: string | null
           closed_at?: string | null
+          closed_budget_pdf_url?: string | null
           commercial_owner_id?: string | null
           condominio?: string | null
           consultora_comercial?: string | null
