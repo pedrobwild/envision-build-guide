@@ -513,14 +513,42 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
     if (paths.length === 0) return;
     setBulkDeleting(true);
     try {
-      // Storage allows up to 1000 paths per remove call, but we batch to be safe
       const BATCH = 100;
+      const removedTotal: string[] = [];
       for (let i = 0; i < paths.length; i += BATCH) {
         const slice = paths.slice(i, i + BATCH);
-        const { error } = await supabase.storage.from("media").remove(slice);
+        const { data, error } = await supabase.storage.from("media").remove(slice);
         if (error) throw error;
+        if (data) removedTotal.push(...data.map((d: { name: string }) => d.name));
       }
-      toast.success(successMsg);
+
+      if (removedTotal.length === 0) {
+        toast.warning("Nenhum arquivo foi apagado. Você pode não ter permissão para remover esses arquivos.");
+        logger.error("[media-delete] zero removed", { expectedPaths: paths, publicId, budgetId });
+        return;
+      }
+
+      if (removedTotal.length < paths.length) {
+        toast.warning(`Apagados ${removedTotal.length} de ${paths.length} arquivos. Alguns falharam (permissão ou já removidos).`);
+      } else {
+        toast.success(successMsg);
+      }
+
+      // Auditoria
+      try {
+        const { data: auth } = await supabase.auth.getUser();
+        await supabase.from("media_change_log").insert({
+          budget_id: budgetId,
+          public_id: publicId,
+          changed_by: auth?.user?.id ?? null,
+          change_type: 'storage_delete',
+          deleted_paths: removedTotal,
+          source: 'web_app',
+        });
+      } catch (auditErr) {
+        logger.error("[media-delete] audit insert failed", auditErr);
+      }
+
       exitSelectionMode();
       await loadFiles(true);
     } catch (err) {
@@ -529,8 +557,9 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
     } finally {
       setBulkDeleting(false);
       setConfirmDialog(null);
+      setConfirmAllText("");
     }
-  }, [exitSelectionMode, loadFiles]);
+  }, [exitSelectionMode, loadFiles, budgetId, publicId]);
 
   const handleConfirmDelete = useCallback(async () => {
     if (!confirmDialog) return;
