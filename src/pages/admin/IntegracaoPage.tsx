@@ -168,11 +168,11 @@ export default function IntegracaoPage() {
     setLoading(true);
     try {
       const [tokenRes, webhookRes] = await Promise.all([
-        supabase
+        db
           .from("personal_access_tokens")
           .select("id, name, token_prefix, scopes, last_used_at, expires_at, revoked_at, created_at")
           .order("created_at", { ascending: false }),
-        supabase
+        db
           .from("integration_webhooks")
           .select(
             "id, name, url, secret, events, active, description, last_triggered_at, last_status, failure_count, created_at, updated_at",
