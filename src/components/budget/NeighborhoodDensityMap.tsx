@@ -608,7 +608,7 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
 
         {/* Right panel: vertical (desktop) / horizontal snap (mobile) carousel of all projects */}
         <section
-          className="flex-[2] md:max-h-[600px] flex flex-col bg-card border border-border rounded-xl overflow-hidden"
+          className="flex-[2] max-h-[420px] md:max-h-[600px] flex flex-col bg-card border border-border rounded-xl overflow-hidden"
           aria-labelledby="neighborhood-projects-heading"
           aria-describedby="neighborhood-projects-help"
         >
