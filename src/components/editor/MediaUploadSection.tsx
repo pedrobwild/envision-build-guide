@@ -465,21 +465,9 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
     }
   };
 
-  const handleDelete = async (tab: StorageTab, fileName: string) => {
-    const path = `${folderMap[tab]}/${fileName}`;
-    try {
-      const { error } = await supabase.storage.from("media").remove([path]);
-      if (error) {
-        toast.error("Erro ao remover arquivo.");
-      } else {
-        toast.success("Arquivo removido.");
-        await loadFiles(true);
-      }
-    } catch (err) {
-      logger.error("handleDelete error:", err);
-      toast.error("Erro ao remover arquivo.");
-    }
-  };
+  const handleDelete = useCallback((tab: StorageTab, fileName: string) => {
+    setConfirmDialog({ kind: "single", tab, fileName });
+  }, []);
 
   /* ── Selection helpers ── */
   const toggleSelect = useCallback((name: string) => {
