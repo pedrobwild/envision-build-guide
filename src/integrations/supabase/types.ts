@@ -2729,6 +2729,7 @@ export type Database = {
           change_type: string
           changed_at: string
           changed_by: string | null
+          deleted_paths: string[] | null
           id: string
           new_media_config: Json | null
           notes: string | null
@@ -2741,6 +2742,7 @@ export type Database = {
           change_type: string
           changed_at?: string
           changed_by?: string | null
+          deleted_paths?: string[] | null
           id?: string
           new_media_config?: Json | null
           notes?: string | null
@@ -2753,6 +2755,7 @@ export type Database = {
           change_type?: string
           changed_at?: string
           changed_by?: string | null
+          deleted_paths?: string[] | null
           id?: string
           new_media_config?: Json | null
           notes?: string | null
