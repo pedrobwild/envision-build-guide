@@ -467,6 +467,23 @@ export async function publishVersion(budgetId: string, groupId: string, publicId
     if (demoteErr) throw demoteErr;
   }
 
+  // Step 1.5: Sincroniza media_config a partir do Storage ANTES de marcar como
+  // publicada. Garante que uploads manuais feitos na aba Mídia (em media/{finalPublicId}/...)
+  // sejam refletidos no /o/{publicId}. Quando o Storage está vazio, NÃO toca em
+  // media_config — preserva eventual herança do catálogo via template.
+  try {
+    const syncRes = await syncMediaConfigFromStorage(budgetId, finalPublicId);
+    if (syncRes.synced) {
+      logger.debug(
+        `[publishVersion] media_config sincronizado a partir do Storage (${finalPublicId})`,
+        syncRes.counts
+      );
+    }
+  } catch (e) {
+    // Não bloqueia publicação se sync falhar — apenas registra.
+    logger.warn("[publishVersion] sync media_config falhou (não bloqueante):", e);
+  }
+
   // Step 2: Publica a nova versão herdando o public_id antigo (ou usando o novo).
   // Também renova `date` para hoje, garantindo que a validade (date + validity_days)
   // seja recontada a partir da publicação desta nova versão.
@@ -482,6 +499,7 @@ export async function publishVersion(budgetId: string, groupId: string, publicId
     .eq("id", budgetId)
     .select("version_number, public_id")
     .single();
+
 
   if (pubErr) throw pubErr;
 
