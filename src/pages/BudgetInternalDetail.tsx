@@ -117,6 +117,7 @@ interface BudgetDetail {
   estimator_owner_id: string | null;
   briefing: string | null;
   legal_briefing: string | null;
+  closed_budget_pdf_url: string | null;
   demand_context: string | null;
   internal_notes: string | null;
   reference_links: string[] | null;
