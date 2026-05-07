@@ -223,9 +223,47 @@ function statusToPipelineIndex(status: string): { index: number; isLost: boolean
   }
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export default function BudgetInternalDetail() {
-  const { budgetId } = useParams<{ budgetId: string }>();
+  const { budgetId: rawBudgetId } = useParams<{ budgetId: string }>();
   const navigate = useNavigate();
+  const [resolvingPrefix, setResolvingPrefix] = useState(false);
+  const [prefixNotFound, setPrefixNotFound] = useState(false);
+  const isValidUuid = !!rawBudgetId && UUID_RE.test(rawBudgetId);
+  const budgetId = isValidUuid ? rawBudgetId : undefined;
+
+  // Recupera links truncados (ex.: WhatsApp/iOS cortando o UUID no fim).
+  // Se o param não é um UUID válido mas tem um prefixo hex razoável,
+  // chama RPC find_budget_by_id_prefix e redireciona para o id completo.
+  useEffect(() => {
+    if (!rawBudgetId || isValidUuid) return;
+    const cleaned = rawBudgetId.replace(/[^0-9a-fA-F-]/g, "");
+    if (cleaned.length < 8) {
+      setPrefixNotFound(true);
+      return;
+    }
+    let cancelled = false;
+    setResolvingPrefix(true);
+    setPrefixNotFound(false);
+    (async () => {
+      const { data, error } = await supabase.rpc(
+        "find_budget_by_id_prefix" as never,
+        { p_prefix: cleaned } as never,
+      );
+      if (cancelled) return;
+      setResolvingPrefix(false);
+      if (error || !data) {
+        setPrefixNotFound(true);
+        return;
+      }
+      navigate(`/admin/demanda/${data}${window.location.search}`, { replace: true });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [rawBudgetId, isValidUuid, navigate]);
+
   const { user } = useAuth();
   const { isAdmin, isComercial } = useUserProfile();
   const { members: comerciais } = useTeamMembers("comercial");
@@ -314,6 +352,10 @@ export default function BudgetInternalDetail() {
   );
 
   useEffect(() => {
+    if (!isValidUuid) {
+      setLoading(false);
+      return;
+    }
     if (!budgetId || !user) return;
     const id = budgetId;
     let cancelled = false;
@@ -420,7 +462,7 @@ export default function BudgetInternalDetail() {
 
     loadAllData();
     return () => { cancelled = true; };
-  }, [budgetId, user]);
+  }, [budgetId, user, isValidUuid]);
 
   // Fetch sync status for this budget
   useEffect(() => {
@@ -695,7 +737,7 @@ export default function BudgetInternalDetail() {
     }
   }, [timeMarkersError, budgetId]);
 
-  if (loading) {
+  if (resolvingPrefix || (loading && !prefixNotFound)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -705,14 +747,19 @@ export default function BudgetInternalDetail() {
 
   if (!budget) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
-        <p className="text-muted-foreground font-body">Demanda não encontrada.</p>
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 px-6 text-center">
+        <p className="text-muted-foreground font-body">
+          {prefixNotFound
+            ? "Link da demanda incompleto ou inválido. Peça para o remetente reenviar o link completo."
+            : "Demanda não encontrada."}
+        </p>
         <Button variant="outline" onClick={() => navigate(-1)}>
           Voltar
         </Button>
       </div>
     );
   }
+
 
   const status = INTERNAL_STATUSES[budget.internal_status as InternalStatus] ?? INTERNAL_STATUSES.requested;
   const prio = PRIORITIES[budget.priority as Priority] ?? PRIORITIES.normal;
