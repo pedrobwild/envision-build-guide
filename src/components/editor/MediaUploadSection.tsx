@@ -1003,7 +1003,7 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
                         className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
                       >
                         <Trash2 className="h-4 w-4" />
-                        Limpar aba
+                        Apagar {currentTab.label}
                       </Button>
                     </>
                   )}
@@ -1014,10 +1014,10 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
                       size="sm"
                       onClick={() => setConfirmDialog({ kind: "all", count: totalAllTabs })}
                       disabled={uploading || reordering || bulkDeleting}
-                      className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10 ml-auto"
+                      className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/40 ml-auto"
                     >
                       <Trash2 className="h-4 w-4" />
-                      Apagar todas as mídias
+                      Apagar TUDO
                     </Button>
                   )}
 
