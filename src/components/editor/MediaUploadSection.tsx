@@ -552,6 +552,12 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
   const handleConfirmDelete = useCallback(async () => {
     if (!confirmDialog) return;
 
+    if (confirmDialog.kind === "single") {
+      const path = `${folderMap[confirmDialog.tab]}/${confirmDialog.fileName}`;
+      await performBulkDelete([path], `Arquivo removido.`);
+      return;
+    }
+
     if (confirmDialog.kind === "selected") {
       if (activeTab === "tour3d") return;
       const folder = folderMap[activeTab as StorageTab];
@@ -569,13 +575,14 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
     }
 
     if (confirmDialog.kind === "all") {
+      logger.warn("[media-delete] APAGAR TUDO acionado", { budgetId, publicId, total: totalAllTabs });
       const allPaths: string[] = [];
       (Object.keys(folderMap) as StorageTab[]).forEach(tab => {
         files[tab].forEach(f => allPaths.push(`${folderMap[tab]}/${f.name}`));
       });
       await performBulkDelete(allPaths, `Todas as mídias apagadas (${allPaths.length} arquivo(s)).`);
     }
-  }, [confirmDialog, activeTab, folderMap, selected, files, performBulkDelete]);
+  }, [confirmDialog, activeTab, folderMap, selected, files, performBulkDelete, budgetId, publicId]);
 
   const totalAllTabs = Object.values(files).reduce((sum, arr) => sum + arr.length, 0);
 
