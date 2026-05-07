@@ -25,6 +25,7 @@ import {
   HeartPulse,
   Bug,
   GitBranch,
+  Plug,
   Trash2,
   Copy,
   ChevronDown,
@@ -152,6 +153,7 @@ const TOOL_GROUPS: ToolGroup[] = [
     id: "integracoes",
     label: "Integrações",
     items: [
+      { title: "Integração", url: "/admin/integracao", icon: Plug, roles: ["admin"] },
       { title: "Leads", url: "/admin/leads", icon: Inbox, roles: ["admin", "comercial", "orcamentista"] },
       { title: "Roteamento", url: "/admin/leads/regras", icon: RouteIcon, roles: ["admin"] },
       { title: "Digisac", url: "/admin/digisac", icon: MessageCircle, roles: ["admin"] },
