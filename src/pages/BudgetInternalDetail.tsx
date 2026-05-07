@@ -733,7 +733,7 @@ export default function BudgetInternalDetail() {
     }
   }, [timeMarkersError, budgetId]);
 
-  if (loading) {
+  if (resolvingPrefix || (loading && !prefixNotFound)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -743,14 +743,19 @@ export default function BudgetInternalDetail() {
 
   if (!budget) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
-        <p className="text-muted-foreground font-body">Demanda não encontrada.</p>
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 px-6 text-center">
+        <p className="text-muted-foreground font-body">
+          {prefixNotFound
+            ? "Link da demanda incompleto ou inválido. Peça para o remetente reenviar o link completo."
+            : "Demanda não encontrada."}
+        </p>
         <Button variant="outline" onClick={() => navigate(-1)}>
           Voltar
         </Button>
       </div>
     );
   }
+
 
   const status = INTERNAL_STATUSES[budget.internal_status as InternalStatus] ?? INTERNAL_STATUSES.requested;
   const prio = PRIORITIES[budget.priority as Priority] ?? PRIORITIES.normal;
