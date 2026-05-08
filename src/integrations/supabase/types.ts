@@ -2428,6 +2428,54 @@ export type Database = {
         }
         Relationships: []
       }
+      integration_webhooks: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          description: string | null
+          events: string[]
+          failure_count: number
+          id: string
+          last_status: string | null
+          last_triggered_at: string | null
+          name: string
+          secret: string | null
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          events?: string[]
+          failure_count?: number
+          id?: string
+          last_status?: string | null
+          last_triggered_at?: string | null
+          name: string
+          secret?: string | null
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          events?: string[]
+          failure_count?: number
+          id?: string
+          last_status?: string | null
+          last_triggered_at?: string | null
+          name?: string
+          secret?: string | null
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
       item_images: {
         Row: {
           created_at: string | null
@@ -3175,6 +3223,48 @@ export type Database = {
         }
         Relationships: []
       }
+      personal_access_tokens: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          last_used_at: string | null
+          name: string
+          revoked_at: string | null
+          scopes: string[]
+          token_hash: string
+          token_prefix: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          last_used_at?: string | null
+          name: string
+          revoked_at?: string | null
+          scopes?: string[]
+          token_hash: string
+          token_prefix: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          last_used_at?: string | null
+          name?: string
+          revoked_at?: string | null
+          scopes?: string[]
+          token_hash?: string
+          token_prefix?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           active_role: Database["public"]["Enums"]["app_role"] | null
@@ -3798,6 +3888,13 @@ export type Database = {
         Args: { p_client_id: string }
         Returns: string
       }
+      create_personal_access_token: {
+        Args: { p_expires_at: string; p_name: string; p_scopes: string[] }
+        Returns: {
+          id: string
+          token: string
+        }[]
+      }
       default_win_probability: { Args: { _stage: string }; Returns: number }
       derive_internal_status_from_stage: {
         Args: { _stage: string }
@@ -3985,6 +4082,10 @@ export type Database = {
         Returns: string
       }
       restore_budget: { Args: { p_budget_id: string }; Returns: string }
+      revoke_personal_access_token: {
+        Args: { p_id: string }
+        Returns: undefined
+      }
       run_reengagement_sweep: {
         Args: never
         Returns: {
