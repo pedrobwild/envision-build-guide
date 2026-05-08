@@ -481,6 +481,7 @@ function GenerateTokenDialog({
   const [expiry, setExpiry] = useState<string>("90");
   const [submitting, setSubmitting] = useState(false);
   const [showToken, setShowToken] = useState(false);
+  const [tokenCopied, setTokenCopied] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -488,6 +489,7 @@ function GenerateTokenDialog({
       setScopes(["read"]);
       setExpiry("90");
       setShowToken(false);
+      setTokenCopied(false);
     }
   }, [open]);
 
