@@ -5,6 +5,13 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Lightbox } from "./Lightbox";
 import { saveToPhotoLibrary } from "@/lib/item-photo-library";
+import { extractStoragePath } from "@/lib/storage-path";
+import {
+  ITEM_IMAGE_BUCKET,
+  buildItemImagePath,
+  validateItemImageFile,
+} from "@/lib/item-image-upload";
+import { uploadWithRetry } from "@/lib/storage-upload-retry";
 
 interface ImageRecord {
   id: string;
@@ -38,20 +45,34 @@ export function ItemImageGallery({ item, budgetId, editable }: ItemImageGalleryP
       toast.error(`Máximo de ${MAX_IMAGES} imagens por item`);
       return;
     }
+    const validation = validateItemImageFile(file);
+    if (!validation.ok) {
+      toast.error(validation.message);
+      return;
+    }
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop();
-      const path = `${budgetId}/items/${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage.from("budget-assets").upload(path, file, { upsert: true });
-      if (error) throw error;
-      const { data: urlData } = supabase.storage.from("budget-assets").getPublicUrl(path);
+      const path = buildItemImagePath(budgetId, validation.ext);
+      await uploadWithRetry({
+        bucket: ITEM_IMAGE_BUCKET,
+        path,
+        file,
+        upsert: true,
+        contentType: file.type || `image/${validation.ext}`,
+      });
+      const { data: urlData } = supabase.storage.from(ITEM_IMAGE_BUCKET).getPublicUrl(path);
       const url = urlData.publicUrl;
       const isPrimary = images.length === 0;
-      const { data: inserted } = await supabase
+      const { data: inserted, error: insertErr } = await supabase
         .from("item_images")
         .insert({ item_id: item.id, url, is_primary: isPrimary })
         .select("id")
         .single();
+      if (insertErr) {
+        // DB insert failed — clean up the uploaded blob to avoid orphans.
+        await supabase.storage.from(ITEM_IMAGE_BUCKET).remove([path]).catch(() => undefined);
+        throw insertErr;
+      }
       const newImg: ImageRecord = { id: inserted?.id || "", url, is_primary: isPrimary };
       setImages((prev) => [...prev, newImg]);
       setActiveIdx(images.length);
@@ -62,7 +83,8 @@ export function ItemImageGallery({ item, budgetId, editable }: ItemImageGalleryP
       toast.success("Imagem adicionada");
     } catch (err) {
       logger.error(err);
-      toast.error("Erro no upload");
+      const message = err instanceof Error ? err.message : "Erro no upload";
+      toast.error(message);
     }
     setUploading(false);
   };
@@ -72,6 +94,14 @@ export function ItemImageGallery({ item, budgetId, editable }: ItemImageGalleryP
     if (!img) return;
     setUploading(true);
     try {
+      const path = extractStoragePath(img.url, ITEM_IMAGE_BUCKET);
+      if (path) {
+        // Best-effort: remove the storage object first; ignore errors so a
+        // missing object can still have its DB row cleaned up.
+        await supabase.storage.from(ITEM_IMAGE_BUCKET).remove([path]).catch((e) => {
+          logger.warn("falha ao remover storage da imagem do item", e);
+        });
+      }
       await supabase.from("item_images").delete().eq("id", img.id);
       const updated = images.filter((_, i) => i !== idx);
       if (img.is_primary && updated.length > 0) {

@@ -274,12 +274,14 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
     const fotos = storageFiles.fotos.filter(f => !isVideo(f.url)).map(f => f.url);
     const video3d = storageFiles.video.find(f => isVideo(f.url))?.url ?? storageFiles["3d"].find(f => isVideo(f.url))?.url;
 
-    // Validate primary URLs still exist; drop stale ones
+    // Validate primary URLs still exist; drop stale ones so the public
+    // viewer never receives a primary pointing at a deleted file.
+    const videoUrls = storageFiles.video.filter(f => isVideo(f.url)).map(f => f.url);
     const safePrimary = {
       projeto3d: primaryByTab["3d"] && projeto3d.includes(primaryByTab["3d"]) ? primaryByTab["3d"] : undefined,
       fotos: primaryByTab.fotos && fotos.includes(primaryByTab.fotos) ? primaryByTab.fotos : undefined,
       projetoExecutivo: primaryByTab.exec && projetoExecutivo.includes(primaryByTab.exec) ? primaryByTab.exec : undefined,
-      video3d: primaryByTab.video,
+      video3d: primaryByTab.video && videoUrls.includes(primaryByTab.video) ? primaryByTab.video : undefined,
     };
 
     const mediaConfig = {

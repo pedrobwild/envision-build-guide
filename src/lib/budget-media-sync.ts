@@ -97,8 +97,8 @@ export async function syncMediaConfigFromStorage(
   const projeto3d = storage["3d"].filter((u) => !isVideo(u));
   const projetoExecutivo = storage.exec.filter((u) => !isVideo(u));
   const fotos = storage.fotos.filter((u) => !isVideo(u));
-  const video3d =
-    storage.video.find((u) => isVideo(u)) ?? storage["3d"].find((u) => isVideo(u));
+  const videoUrls = storage.video.filter((u) => isVideo(u));
+  const video3d = videoUrls[0] ?? storage["3d"].find((u) => isVideo(u));
 
   const safePrimary = {
     projeto3d:
@@ -113,7 +113,10 @@ export async function syncMediaConfigFromStorage(
       existingPrimary.projetoExecutivo && projetoExecutivo.includes(existingPrimary.projetoExecutivo)
         ? existingPrimary.projetoExecutivo
         : undefined,
-    video3d: existingPrimary.video3d,
+    video3d:
+      existingPrimary.video3d && videoUrls.includes(existingPrimary.video3d)
+        ? existingPrimary.video3d
+        : undefined,
   };
 
   const mediaConfig = {

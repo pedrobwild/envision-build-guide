@@ -2,6 +2,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { logVersionEvent } from "@/lib/version-audit";
 import { syncMediaConfigFromStorage } from "@/lib/budget-media-sync";
 import { logger } from "@/lib/logger";
+import { extractStoragePaths } from "@/lib/storage-path";
+import { ITEM_IMAGE_BUCKET } from "@/lib/item-image-upload";
 
 /**
  * Ensure a budget has a version_group_id. If it doesn't, set it to its own id.
@@ -383,6 +385,21 @@ export async function deleteDraftVersion(
       .in("section_id", sectionIds);
     const itemIds = (itemRows || []).map((i) => i.id);
     if (itemIds.length > 0) {
+      // Storage cleanup before DB cascade so we don't leak orphan files.
+      const { data: imageRows } = await supabase
+        .from("item_images")
+        .select("url")
+        .in("item_id", itemIds);
+      const paths = extractStoragePaths((imageRows ?? []).map((r) => r.url), ITEM_IMAGE_BUCKET);
+      if (paths.length > 0) {
+        const BATCH = 100;
+        for (let i = 0; i < paths.length; i += BATCH) {
+          await supabase.storage
+            .from(ITEM_IMAGE_BUCKET)
+            .remove(paths.slice(i, i + BATCH))
+            .catch((e) => logger.warn("falha ao limpar imagens do item no storage", e));
+        }
+      }
       await supabase.from("item_images").delete().in("item_id", itemIds);
       await supabase.from("items").delete().in("id", itemIds);
     }
