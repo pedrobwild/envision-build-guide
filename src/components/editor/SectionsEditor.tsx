@@ -51,6 +51,8 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { saveToPhotoLibrary } from "@/lib/item-photo-library";
+import { extractStoragePaths } from "@/lib/storage-path";
+import { ITEM_IMAGE_BUCKET } from "@/lib/item-image-upload";
 
 interface SectionData {
   id: string;
@@ -1337,8 +1339,28 @@ export const SectionsEditor = forwardRef<SectionsEditorHandle, SectionsEditorPro
     return null;
   };
 
+  const cleanupItemImageStorage = async (itemIds: string[]) => {
+    // Only budget items have rows in `item_images`; templates skip this.
+    if (cfg.itemTable !== "items" || itemIds.length === 0) return;
+    const { data: rows } = await supabase
+      .from("item_images")
+      .select("url")
+      .in("item_id", itemIds);
+    const paths = extractStoragePaths((rows ?? []).map(r => r.url), ITEM_IMAGE_BUCKET);
+    if (paths.length === 0) return;
+    // Storage.remove allows up to 1000 paths per call; chunk to be safe.
+    const BATCH = 100;
+    for (let i = 0; i < paths.length; i += BATCH) {
+      await supabase.storage
+        .from(ITEM_IMAGE_BUCKET)
+        .remove(paths.slice(i, i + BATCH))
+        .catch((e) => logger.warn("falha ao limpar imagens do item no storage", e));
+    }
+  };
+
   const deleteItem = async (sectionId: string, itemId: string) => {
     if (blockedByReadOnly()) return;
+    await cleanupItemImageStorage([itemId]);
     await dbFrom(cfg.itemTable).delete().eq("id", itemId);
     let updated = sections.map(s => {
       if (s.id !== sectionId) return s;
@@ -1357,6 +1379,7 @@ export const SectionsEditor = forwardRef<SectionsEditorHandle, SectionsEditorPro
     const section = sections.find(s => s.id === sectionId);
     if (section && section.items.length > 0) {
       const itemIds = section.items.map(i => i.id);
+      await cleanupItemImageStorage(itemIds);
       await dbFrom(cfg.itemTable).delete().in("id", itemIds);
     }
     await dbFrom(cfg.sectionTable).delete().eq("id", sectionId);

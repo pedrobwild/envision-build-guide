@@ -5,6 +5,14 @@ import { Loader2, ImagePlus, X, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { saveToPhotoLibrary } from "@/lib/item-photo-library";
 import { ItemImageLightbox } from "@/components/editor/ItemImageLightbox";
+import { extractStoragePath } from "@/lib/storage-path";
+import {
+  ITEM_IMAGE_BUCKET,
+  buildItemImagePath,
+  validateItemImageFile,
+} from "@/lib/item-image-upload";
+import { uploadWithRetry } from "@/lib/storage-upload-retry";
+import { logger } from "@/lib/logger";
 
 interface ItemImage {
   id?: string;
@@ -33,32 +41,58 @@ export function ItemImageInline({
     if (!files || files.length === 0) return;
     setUploading(true);
     let currentImages = [...images];
+    let added = 0;
     try {
       for (const file of Array.from(files).slice(0, 5 - currentImages.length)) {
-        if (!file.type.startsWith("image/")) continue;
-        const ext = file.name.split(".").pop();
-        const path = `${budgetId}/items/${crypto.randomUUID()}.${ext}`;
-        const { error } = await supabase.storage.from("budget-assets").upload(path, file, { upsert: true });
-        if (error) { toast.error("Erro no upload"); continue; }
-        const { data: urlData } = supabase.storage.from("budget-assets").getPublicUrl(path);
+        const validation = validateItemImageFile(file);
+        if (!validation.ok) { toast.error(validation.message); continue; }
+        const path = buildItemImagePath(budgetId, validation.ext);
+        try {
+          await uploadWithRetry({
+            bucket: ITEM_IMAGE_BUCKET,
+            path,
+            file,
+            upsert: true,
+            contentType: file.type || `image/${validation.ext}`,
+          });
+        } catch (e) {
+          logger.error("upload item image failed", e);
+          toast.error(e instanceof Error ? e.message : "Erro no upload");
+          continue;
+        }
+        const { data: urlData } = supabase.storage.from(ITEM_IMAGE_BUCKET).getPublicUrl(path);
         const isPrimary = currentImages.length === 0;
-        const { data: imgRow } = await supabase.from("item_images").insert({
+        const { data: imgRow, error: insertErr } = await supabase.from("item_images").insert({
           item_id: itemId,
           url: urlData.publicUrl,
           is_primary: isPrimary,
         }).select().single();
-        if (imgRow) {
-          currentImages = [...currentImages, imgRow];
-          if (isPrimary) saveToPhotoLibrary(itemTitle, urlData.publicUrl);
+        if (insertErr || !imgRow) {
+          await supabase.storage.from(ITEM_IMAGE_BUCKET).remove([path]).catch(() => undefined);
+          if (insertErr) toast.error("Erro ao salvar imagem");
+          continue;
         }
+        currentImages = [...currentImages, imgRow];
+        added++;
+        if (isPrimary) saveToPhotoLibrary(itemTitle, urlData.publicUrl);
       }
       onImagesChange(currentImages);
-      toast.success("Imagem adicionada");
-    } catch { toast.error("Erro ao fazer upload"); }
+      if (added > 0) toast.success(added > 1 ? `${added} imagens adicionadas` : "Imagem adicionada");
+    } catch (err) {
+      logger.error("upload loop failed", err);
+      toast.error("Erro ao fazer upload");
+    }
     setUploading(false);
   };
 
   const removeImage = async (imgId: string) => {
+    const target = images.find(i => i.id === imgId);
+    const path = target ? extractStoragePath(target.url, ITEM_IMAGE_BUCKET) : null;
+    if (path) {
+      await supabase.storage.from(ITEM_IMAGE_BUCKET).remove([path]).catch((e) => {
+        logger.warn("falha ao remover storage da imagem do item", e);
+      });
+    }
     await supabase.from("item_images").delete().eq("id", imgId);
     const updated = images.filter(i => i.id !== imgId);
     if (updated.length > 0 && !updated.some(i => i.is_primary) && updated[0].id) {
