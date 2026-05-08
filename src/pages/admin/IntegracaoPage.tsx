@@ -575,10 +575,19 @@ function GenerateTokenDialog({
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => copyToClipboard(generatedToken, "Token")}
-                aria-label="Copiar"
+                onClick={() => {
+                  copyToClipboard(generatedToken, "Token");
+                  setTokenCopied(true);
+                  setTimeout(() => setTokenCopied(false), 2000);
+                }}
+                aria-label={tokenCopied ? "Copiado" : "Copiar"}
+                className={tokenCopied ? "text-emerald-600 border-emerald-300 dark:text-emerald-400 dark:border-emerald-700" : ""}
               >
-                <Copy className="h-3.5 w-3.5" />
+                {tokenCopied ? (
+                  <Check className="h-3.5 w-3.5" />
+                ) : (
+                  <Copy className="h-3.5 w-3.5" />
+                )}
               </Button>
             </div>
             <DialogFooter>
